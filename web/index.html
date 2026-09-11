@@ -176,6 +176,14 @@
   .hero .actions { margin-top: clamp(24px, 3vh, 38px); }
   .hero .btn { font-size: 15px; padding: 15px 24px; }
   .hero .btn svg { width: 16px; height: 16px; }
+  /* The download's own facts, directly under it, in the data face. */
+  .meta {
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: var(--t-micro);
+    letter-spacing: 0.06em;
+    color: var(--faint);
+  }
   /* One column below the width where the headline stops holding its own.
      Height goes back to content-led: a full screen of hero on a phone would
      push the diagram off it. */
@@ -542,6 +550,12 @@
     padding: 2px 6px;
     border-radius: var(--r-flat);
   }
+  .install .btn.primary {
+    background: var(--black);
+    border-color: var(--black);
+    color: var(--paper);
+  }
+  .install .btn.primary:hover { background: #1f1f1f; border-color: #1f1f1f; }
   .install .keys { margin-top: 34px; padding-top: 22px; border-top: 3px solid #d9d9d9; display: grid; gap: 10px; }
   .install .krow { display: flex; align-items: center; justify-content: space-between; gap: 18px; font-size: 14.5px; font-weight: 500; color: #1a1a1a; }
   .install kbd {
@@ -604,12 +618,13 @@
       thread across as a brief the next one can act on, typed into its composer.
     </p>
     <div class="actions">
-      <a class="btn primary" href="#install">
+      <a class="btn primary" href="slipstream-1.0.0.zip" download>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v13M7 12l5 5 5-5M4 21h16" /></svg>
-        Load it unpacked
+        Download the ZIP
       </a>
-      <a class="btn" href="https://github.com" rel="noopener">Read the source</a>
+      <a class="btn" href="#manual">How to install it</a>
     </div>
+    <p class="meta">Version 1.0.0 · 80 KB · Chrome, Edge, Brave, Arc</p>
    </div>
 
     <div class="diagram">
@@ -866,7 +881,7 @@
           </div>
           <span class="where">Windows 10 and 11 · Chrome, Edge, Brave</span>
           <ol>
-            <li>Download the repo as a ZIP from GitHub and <b>extract it</b> — for example to <code>C:\Users\you\slipstream</code>. Do not load it from inside the ZIP.</li>
+            <li><b>Download the ZIP</b> from the top of this page, then right-click it and choose <b>Extract All</b> — for example to <code>C:\Users\you\slipstream</code>. Chrome cannot load an extension from inside a ZIP.</li>
             <li>Open your browser and go to <code>chrome://extensions</code> — on Edge that address is <code>edge://extensions</code>.</li>
             <li>Turn on <b>Developer mode</b> (top-right on Chrome, left sidebar on Edge).</li>
             <li>Click <b>Load unpacked</b> and select the <code>extension</code> folder inside the one you extracted.</li>
@@ -887,8 +902,8 @@
           </div>
           <span class="where">macOS 12+ · Chrome, Edge, Brave, Arc</span>
           <ol>
-            <li>Clone it in Terminal: <code>git clone &lt;repo-url&gt; slipstream</code>, or download and unzip it to your home folder.</li>
-            <li>Optional sanity check: <code>cd slipstream &amp;&amp; npm install &amp;&amp; npm run verify</code>.</li>
+            <li><b>Download the ZIP</b> from the top of this page and double-click it to unpack — Finder unzips it beside the file, usually in Downloads.</li>
+            <li>Prefer the source? <code>git clone &lt;repo-url&gt; slipstream</code>, then optionally <code>npm install &amp;&amp; npm run verify</code>.</li>
             <li>Open <code>chrome://extensions</code> in your browser — on Brave that address is <code>brave://extensions</code>.</li>
             <li>Turn on <b>Developer mode</b>, top right.</li>
             <li>Click <b>Load unpacked</b> and pick the <code>extension</code> folder. In the file dialog, <code>⌘ ⇧ .</code> reveals hidden files if you need it.</li>
@@ -930,12 +945,18 @@
         <h2>The short version</h2>
         <p class="lead">Unpacked, from source, on Windows or macOS. No build step, no dependencies, no account. The Groq key is optional and free.</p>
         <ol>
-          <li>Clone or download the repo, then optionally run <code>npm run check</code>.</li>
+          <li>Download the ZIP and unpack it, or clone the repo.</li>
           <li>Open <code>chrome://extensions</code> — or <code>edge://extensions</code> — and turn on Developer mode.</li>
           <li>Choose <b>Load unpacked</b> and select the <code>extension/</code> folder.</li>
           <li>Paste a free key from <code>console.groq.com/keys</code> into settings, or skip it.</li>
           <li>Open any supported chat. The launcher appears in the corner.</li>
         </ol>
+        <div class="actions" style="margin-top: 30px;">
+          <a class="btn primary" href="slipstream-1.0.0.zip" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v13M7 12l5 5 5-5M4 21h16" /></svg>
+            Download slipstream-1.0.0.zip
+          </a>
+        </div>
         <div class="keys">
           <div class="krow"><span>Show or hide the panel</span><kbd>⌘ ⇧ K · Ctrl ⇧ K</kbd></div>
           <div class="krow"><span>Capture the current thread</span><kbd>⌘ ⇧ S · Ctrl ⇧ S</kbd></div>

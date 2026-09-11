@@ -23,3 +23,9 @@ execFileSync('zip', ['-r', '-q', '-X', out, '.', '-x', '.*', '-x', '__MACOSX/*']
 
 const kb = (fs.statSync(out).size / 1024).toFixed(1);
 console.log(`\n  Packaged ${path.relative(root, out)} (${kb} KB)`);
+
+// The landing page offers the same zip as a download, so it is copied beside
+// index.html here rather than by hand: a stale download is worse than none.
+const web = path.join(root, 'web', `slipstream-${version}.zip`);
+fs.copyFileSync(out, web);
+console.log(`  Copied to ${path.relative(root, web)} for the landing page`);
