@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Slipstream — a Chrome extension that carries your conversation context across ChatGPT, Claude, Gemini, Copilot and Grok.",
+  "description": "Slipstream \u2014 a Chrome extension that carries your conversation context across ChatGPT, Claude, Gemini, Copilot and Grok.",
   "scripts": {
     "test": "node --test test/",
     "check": "node scripts/check.js",
     "verify": "npm run check && npm test",
-    "zip": "node scripts/zip.js"
+    "zip": "node scripts/zip.js",
+    "deploy": "cd web && vercel deploy --prod --yes > /dev/null && echo 'Live: https://slipstream-rosy.vercel.app'"
   },
   "devDependencies": {
     "jsdom": "^28.0.0"
