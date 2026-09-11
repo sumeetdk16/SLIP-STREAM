@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Slipstream — Settings</title>
+  <title>Slipstream Settings</title>
   <link rel="stylesheet" href="../shared/ui.css" />
   <link rel="stylesheet" href="options.css" />
 </head>
@@ -17,7 +17,7 @@
     <div class="welcome card" id="welcome" hidden>
       <b>Slipstream is on.</b>
       <p>
-        Open ChatGPT, Claude, Gemini, Copilot or Grok — the launcher appears in the corner of the
+        Open ChatGPT, Claude, Gemini, Copilot or Grok, and the launcher appears in the corner of the
         page. Add a Groq key below and handoffs arrive compressed instead of pasted whole.
       </p>
     </div>
@@ -40,8 +40,8 @@
         <div class="field">
           <label for="model">Model</label>
           <select id="model">
-            <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B — versatile (recommended)</option>
-            <option value="llama-3.1-8b-instant">LLaMA 3.1 8B — instant (fastest)</option>
+            <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B, versatile (recommended)</option>
+            <option value="llama-3.1-8b-instant">LLaMA 3.1 8B, instant (fastest)</option>
             <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
             <option value="qwen/qwen3-32b">Qwen 3 32B</option>
           </select>
@@ -99,15 +99,25 @@
     <section>
       <h2>Data</h2>
       <div class="card">
-        <p class="sub" style="margin-top: 0">
-          Captured threads live in this browser's local extension storage and never leave it, except as
-          the brief you explicitly carry over. The 40 most recent threads are kept.
-        </p>
-        <div class="row">
+        <dl class="facts">
+          <div class="fact">
+            <dt>Stored</dt>
+            <dd>Your last <b>40 threads</b>, in this browser's local extension storage. Never synced.</dd>
+          </div>
+          <div class="fact">
+            <dt>Sent</dt>
+            <dd>The thread you are carrying, to <b>api.groq.com</b>, and only when you pick a line or press Enhance.</dd>
+          </div>
+          <div class="fact">
+            <dt>Never sent</dt>
+            <dd>Anything to a Slipstream server, because there <b>isn't one</b>. No analytics, no accounts, no telemetry.</dd>
+          </div>
+        </dl>
+        <div class="row" style="margin-top: 14px">
           <button class="btn" id="export">Export threads</button>
           <button class="btn danger" id="clear">Delete all threads</button>
           <span class="spacer"></span>
-          <span id="ctx-count" class="pill"><span class="bar"></span><span>—</span></span>
+          <span id="ctx-count" class="pill"><span class="bar"></span><span>Counting</span></span>
         </div>
         <p id="data-status" class="status"></p>
       </div>
@@ -115,6 +125,7 @@
   </main>
 
   <script src="../shared/platforms.js"></script>
+  <script src="../shared/logos.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@
  * same on all six of them. Host CSP blocks remote fonts in an injected overlay,
  * so the display voice here is weight and tracking, not a downloaded face.
  */
-/* global SLIPSTREAM_PLATFORM_LIST */
+/* global SLIPSTREAM_PLATFORM_LIST, slipstreamLogo */
 (function (root) {
   'use strict';
 
@@ -31,11 +31,9 @@
         return '';
       }
     };
-    const syne = url('syne-var-latin.woff2');
     const outfit = url('outfit-var-latin.woff2');
-    if (!syne || !outfit) return '';
+    if (!outfit) return '';
     return `
-    @font-face { font-family: "Syne"; src: url("${syne}") format("woff2"); font-weight: 400 800; font-display: swap; }
     @font-face { font-family: "Outfit"; src: url("${outfit}") format("woff2"); font-weight: 100 900; font-display: swap; }
     `;
   }
@@ -59,27 +57,42 @@
     align-items: flex-end;
     gap: 10px;
 
-    --ss-ink: #100c0a;
-    --ss-panel: #181310;
-    --ss-raised: #231c17;
-    --ss-hair: #372c25;
-    --ss-text: #fbf6ee;
-    --ss-dim: #bcae9f;
-    --ss-faint: #93857a;
-    --ss-live: #ff6a00;
-    --ss-amber: #ffbe00;
-    --ss-stop: #a01520;
+    --ss-ink: #000000;
+    --ss-panel: #0b0b0b;
+    --ss-raised: #161616;
+    --ss-hair: #242424;
+    --ss-hair-hi: #383838;
+    --ss-text: #f5f5f5;
+    --ss-dim: #a3a3a3;
+    --ss-faint: #6e6e6e;
+    /* White acts. The panel floats on someone else's page, so the one
+       full-strength white surface in it is the control that does the thing. */
+    --ss-live: #ffffff;
+    --ss-live-hi: #ffffff;
+    --ss-on-live: #000000;
+    /* The only hue in the system, and it means one thing: this line is closed.
+       A filled board takes the darker red so white type clears 4.5:1 on it;
+       a *mark* on the black ground takes the brighter one so it is seen. */
+    --ss-stop: #b52126;
+    --ss-flare: #e5484d;
 
-    --ss-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+    /* Same three-step scale as the popup: diagram nearly sharp, controls 6,
+       surfaces 10. The panel is the one surface that earns 12. */
+    --ss-r-flat: 2px;
+    --ss-r: 6px;
+    --ss-r-lg: 10px;
+
     --ss-ui: "Outfit", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+    --ss-display: "Outfit", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+    --ss-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   }
 
-  ::selection { background: var(--ss-live); color: #170a01; }
+  ::selection { background: var(--ss-live); color: var(--ss-on-live); }
 
   /* ---------------------------------------------------------- launcher */
   .launcher {
     width: 46px; height: 46px;
-    border-radius: 12px;
+    border-radius: var(--ss-r-lg);
     border: 1px solid var(--ss-hair);
     background: var(--ss-ink);
     display: grid; place-items: center;
@@ -97,7 +110,7 @@
   /* A hit limit shows the way a closed line does on a map: a stop bar. */
   .pip {
     position: absolute; left: 0; right: 0; bottom: 0;
-    height: 5px; background: var(--ss-stop);
+    height: 5px; background: var(--ss-flare);
     transform: scaleX(0); transform-origin: left;
     transition: transform .22s cubic-bezier(.2,.9,.3,1);
   }
@@ -110,8 +123,9 @@
     max-height: min(78vh, 660px);
     background: var(--ss-panel);
     border: 1px solid var(--ss-hair);
-    border-radius: 14px;
-    box-shadow: 0 18px 50px -12px rgba(0,0,0,.7), 0 4px 12px -4px rgba(0,0,0,.5);
+    border-radius: 12px;
+    /* Warm-tinted: a neutral black drop reads as a hole cut in the host page. */
+    box-shadow: 0 18px 50px -12px rgba(12,7,4,.78), 0 4px 12px -4px rgba(12,7,4,.6);
     overflow: hidden;
     display: none;
     flex-direction: column;
@@ -132,8 +146,8 @@
   }
   .wordmark {
     font-family: var(--ss-display);
-    font-size: 13px; font-weight: 800;
-    letter-spacing: .13em; text-transform: uppercase;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
     color: var(--ss-text);
   }
   header .mark { width: 19px; height: 19px; display: block; flex: none; }
@@ -141,11 +155,12 @@
 
   /* the line you are currently riding */
   .now { display: inline-flex; align-items: center; gap: 7px; }
-  .now .bar { width: 16px; height: 4px; border-radius: 1px; flex: none; }
+  .now .logo { display: grid; place-items: center; flex: none; color: var(--ss-text); }
+  .now .logo svg { display: block; }
   .now .lbl { font-size: 11.5px; font-weight: 600; color: var(--ss-dim); white-space: nowrap; }
 
   .iconbtn {
-    width: 24px; height: 24px; border-radius: 6px;
+    width: 24px; height: 24px; border-radius: var(--ss-r);
     border: 0; background: transparent; padding: 0;
     color: var(--ss-faint); cursor: pointer; display: grid; place-items: center;
     transition: color .14s, background .14s;
@@ -165,32 +180,37 @@
   .slot + .slot { margin-top: 20px; }
 
   .label {
-    font-size: 11px; font-weight: 600;
-    letter-spacing: .16em; text-transform: uppercase;
+    font-family: var(--ss-mono);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: .14em; text-transform: uppercase;
     color: var(--ss-faint); margin-bottom: 10px;
     display: flex; align-items: baseline; gap: 8px;
   }
-  .label .count { letter-spacing: 0; text-transform: none; font-weight: 500; font-size: 11px; color: var(--ss-faint); }
+  .label .count {
+    font-family: var(--ss-ui);
+    letter-spacing: 0; text-transform: none; font-weight: 500; font-size: 11px; color: var(--ss-faint);
+  }
 
   /* --------------------------------------------------------- thread */
   .thread { display: grid; grid-template-columns: 14px 1fr; gap: 11px; align-items: start; }
   .thread .stn {
-    width: 13px; height: 13px; border-radius: 50%;
-    border: 3px solid var(--line, var(--ss-live));
-    background: var(--ss-panel);
-    margin-top: 3px; margin-left: -0.5px; flex: none;
+    width: 15px; height: 15px;
+    display: grid; place-items: center;
+    color: var(--ss-text);
+    margin-top: 3px; flex: none;
   }
+  .thread .stn svg { display: block; }
   .thread .title {
     font-size: 14.5px; font-weight: 600; letter-spacing: -.012em; color: var(--ss-text);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .thread .meta { font-size: 11.5px; color: var(--ss-dim); margin-top: 2px; }
-  .thread .meta .warn { color: var(--ss-amber); }
+  .thread .meta .warn { color: var(--ss-text); }
 
   /* thread length as a line-fill, butt ends, no rounding */
-  .gauge { height: 4px; background: var(--ss-hair); margin-top: 11px; overflow: hidden; }
+  .gauge { height: 4px; background: var(--ss-hair); border-radius: var(--ss-r-flat); margin-top: 11px; overflow: hidden; }
   .gauge i {
-    display: block; height: 100%; width: 100%; background: var(--ss-amber);
+    display: block; height: 100%; width: 100%; background: var(--ss-dim);
     transform-origin: left; transform: scaleX(0);
     transition: transform .45s cubic-bezier(.22,1,.36,1);
   }
@@ -213,56 +233,61 @@
     position: relative;
     display: flex; align-items: center; gap: 11px;
     width: 100%; padding: 8px 10px 8px 32px;
-    border: 0; border-radius: 7px; background: transparent;
+    border: 0; border-radius: var(--ss-r); background: transparent;
     color: var(--ss-text); font: inherit; font-size: 13.5px; font-weight: 550;
     text-align: left; cursor: pointer;
     transition: background .14s ease;
   }
   .target .tname { transition: transform .18s cubic-bezier(.22,1,.36,1); }
+  /* The station is the destination's own mark, sitting on the trunk. Grey
+     until you hover it, then full white: the line you are about to take. */
   .target .stn {
-    position: absolute; left: ${TRUNK_X - 5}px; top: 50%; margin-top: -6px;
-    width: 12px; height: 12px; border-radius: 50%;
-    border: 2.5px solid var(--line);
+    position: absolute; left: ${TRUNK_X - 8}px; top: 50%; margin-top: -9px;
+    width: 18px; height: 18px;
+    display: grid; place-items: center;
     background: var(--ss-panel);
-    transition: background .14s ease, transform .18s cubic-bezier(.22,1,.36,1);
+    color: var(--ss-faint);
+    transition: color .14s ease, transform .18s cubic-bezier(.22,1,.36,1);
   }
+  .target .stn svg { display: block; }
   .target .go { margin-left: auto; color: var(--ss-faint); display: grid; place-items: center; opacity: 0; transform: translateX(-4px); transition: opacity .14s, transform .14s; }
   .target .go svg { width: 13px; height: 13px; display: block; }
-  .target:hover:not(:disabled) { background: color-mix(in srgb, var(--line) 16%, transparent); }
+  .target:hover:not(:disabled) { background: var(--ss-raised); }
   .target:hover:not(:disabled) .tname { transform: translateX(3px); }
-  .target:hover:not(:disabled) .stn { background: var(--line); transform: scale(1.15); }
+  .target:hover:not(:disabled) .stn { color: var(--ss-text); transform: scale(1.12); }
   .target:hover:not(:disabled) .go { opacity: 1; transform: none; }
   .target:disabled { color: var(--ss-faint); cursor: default; }
-  .target:disabled .stn { border-color: var(--ss-hair); }
-  .target.busy { background: color-mix(in srgb, var(--line) 22%, transparent); }
+  .target:disabled .stn { color: var(--ss-hair-hi); }
+  .target.busy { background: var(--ss-raised); }
   .target.busy .tname { transform: translateX(3px); }
-  .target.busy .stn { background: var(--line); }
-  .target .eta { font-size: 11px; color: var(--ss-dim); font-weight: 500; }
+  .target.busy .stn { color: var(--ss-text); }
+  .target .eta { font-family: var(--ss-mono); font-size: 10.5px; color: var(--ss-dim); font-weight: 500; letter-spacing: .04em; }
 
   /* ------------------------------------------------------------ buttons */
   .row { display: flex; gap: 8px; }
   .btn {
     flex: 1; padding: 9px 12px;
-    border-radius: 7px; border: 1px solid var(--ss-hair);
+    border-radius: var(--ss-r); border: 1px solid var(--ss-hair);
     background: transparent; color: var(--ss-text);
     font: inherit; font-size: 12.5px; font-weight: 600;
     cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-    transition: background .14s, border-color .14s, color .14s;
+    transition: background .14s, border-color .14s, color .14s, transform .1s;
   }
-  .btn:hover:not(:disabled) { background: var(--ss-raised); border-color: #4a3b31; }
+  .btn:hover:not(:disabled) { background: var(--ss-raised); border-color: var(--ss-hair-hi); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
   .btn:disabled { color: var(--ss-faint); cursor: default; }
   .btn svg { width: 13px; height: 13px; display: block; flex: none; }
   .btn.primary {
-    background: var(--ss-live); border-color: var(--ss-live); color: #170a01; font-weight: 700;
+    background: var(--ss-live); border-color: var(--ss-live); color: var(--ss-on-live); font-weight: 700;
   }
-  .btn.primary:hover:not(:disabled) { background: #ff8326; border-color: #ff8326; }
+  .btn.primary:hover:not(:disabled) { background: var(--ss-live-hi); border-color: var(--ss-live-hi); }
   .btn.primary:disabled { background: transparent; border-color: var(--ss-hair); color: var(--ss-faint); }
   .btn.icon-only { flex: none; width: 38px; padding: 9px 0; }
 
   /* ----------------------------------------------------------- enhancer */
   textarea {
     width: 100%; min-height: 76px; max-height: 190px; resize: vertical;
-    padding: 10px 11px; border-radius: 7px;
+    padding: 10px 11px; border-radius: var(--ss-r);
     background: var(--ss-ink); border: 1px solid var(--ss-hair); color: var(--ss-text);
     font-family: inherit; font-size: 13px; line-height: 1.55;
     caret-color: var(--ss-live); outline: none;
@@ -274,8 +299,8 @@
 
   .hint { font-size: 11px; color: var(--ss-faint); margin-top: 9px; line-height: 1.5; }
   .hint kbd {
-    font-family: inherit; font-size: 10px; font-weight: 600;
-    padding: 1px 5px; border-radius: 4px;
+    font-family: var(--ss-mono); font-size: 10px; font-weight: 500;
+    padding: 1px 5px; border-radius: var(--ss-r-flat);
     background: var(--ss-raised); border: 1px solid var(--ss-hair); color: var(--ss-dim);
   }
 
@@ -283,41 +308,43 @@
   .banner {
     display: none; align-items: flex-start; gap: 10px;
     padding: 11px 12px; background: var(--ss-stop);
-    color: #fff; margin-bottom: 18px; border-radius: 7px;
+    color: #fff; margin-bottom: 18px; border-radius: var(--ss-r);
   }
   .banner.on { display: flex; }
   .banner .ico { flex: none; margin-top: 1px; }
   .banner .ico svg { width: 16px; height: 16px; display: block; }
   .banner b { display: block; font-family: var(--ss-display); font-size: 13.5px; font-weight: 700; letter-spacing: -.005em; }
-  .banner p { margin: 1px 0 0; font-size: 12px; font-weight: 500; color: #ffd9d6; }
-  .banner .iconbtn { color: #ffd9d6; }
+  .banner p { margin: 1px 0 0; font-size: 12px; font-weight: 500; color: #ffdcdd; }
+  .banner .iconbtn { color: #ffdcdd; }
   .banner .iconbtn:hover { background: rgba(0,0,0,.28); color: #fff; }
 
   /* ------------------------------------------------------------ history */
   .history { display: flex; flex-direction: column; }
   .hitem {
     display: flex; align-items: center; gap: 10px;
-    padding: 8px 9px; border: 0; border-radius: 6px; background: transparent;
+    padding: 8px 9px; border: 0; border-radius: var(--ss-r); background: transparent;
     cursor: pointer; text-align: left; width: 100%; color: inherit; font: inherit;
     transition: background .14s;
   }
   .hitem:hover { background: var(--ss-raised); }
   .hitem.active { background: var(--ss-raised); }
-  .hitem .bar { width: 14px; height: 4px; border-radius: 1px; flex: none; }
+  .hitem .logo { display: grid; place-items: center; flex: none; color: var(--ss-faint); transition: color .14s; }
+  .hitem .logo svg { display: block; }
+  .hitem:hover .logo, .hitem.active .logo { color: var(--ss-text); }
   .hitem .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
   .hitem.active .t { font-weight: 650; }
-  .hitem .n { font-size: 11px; color: var(--ss-faint); flex: none; }
+  .hitem .n { font-family: var(--ss-mono); font-size: 10.5px; color: var(--ss-faint); flex: none; }
 
   .empty {
     font-size: 12px; color: var(--ss-faint); padding: 14px 12px;
-    background: var(--ss-ink); border-radius: 7px; line-height: 1.55;
+    background: var(--ss-ink); border-radius: var(--ss-r); line-height: 1.55;
   }
 
   /* ------------------------------------------------- service notice bar */
   .toast {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 11px 14px;
-    background: var(--ss-live); color: #170a01;
+    background: var(--ss-live); color: var(--ss-on-live);
     font-size: 12.5px; font-weight: 600;
     display: flex; align-items: center; gap: 9px;
     transform: translateY(101%);
@@ -355,8 +382,8 @@
   const ICONS = {
     // the lane change, flat, at two weights of the same geometry
     mark: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M2 17h20" stroke="#333842" stroke-width="2.4" stroke-linecap="butt"/>
-      <path d="M2 17h4.6l7-10H22" stroke="#ffd400" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter"/></svg>`,
+      <path d="M2 17h20" stroke="#3a3a3a" stroke-width="2.4" stroke-linecap="butt"/>
+      <path d="M2 17h4.6l7-10H22" stroke="#ffffff" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter"/></svg>`,
     close: stroke('<path d="M18 6 6 18M6 6l12 12"/>'),
     settings: stroke('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><path d="M14 4v6M6 14v6"/>'),
     capture: stroke('<path d="M4 12h5l3-5h8"/><path d="M17 4l3 3-3 3"/>'),
@@ -417,15 +444,15 @@
     const body = h('div', { class: 'body' });
     const toast = h('div', { class: 'toast' });
 
-    const nowBar = h('span', { class: 'bar' });
-    nowBar.style.background = platform.color;
+    // The line you are riding names itself with its own mark.
+    const nowMark = h('span', { class: 'logo', html: slipstreamLogo(platform.id, { size: 15 }) });
 
     const panel = h('div', { class: 'panel' }, [
       h('header', {}, [
         h('span', { class: 'mark', html: ICONS.mark }),
         h('span', { class: 'wordmark', text: 'Slipstream' }),
         h('span', { class: 'spacer' }),
-        h('span', { class: 'now' }, [nowBar, h('span', { class: 'lbl', text: platform.name })]),
+        h('span', { class: 'now' }, [nowMark, h('span', { class: 'lbl', text: platform.name })]),
         h('button', {
           class: 'iconbtn',
           title: 'Settings',
@@ -566,8 +593,7 @@
       // 30 turns is where a thread stops fitting comfortably in one handoff.
       const fill = Math.min(100, Math.round((count / 30) * 100));
 
-      const stn = h('span', { class: 'stn' });
-      stn.style.setProperty('--line', platform.color);
+      const stn = h('span', { class: 'stn', html: slipstreamLogo(platform.id, { size: 15 }) });
 
       const meta = h('div', { class: 'meta' }, [
         h('span', { text: `${count} turn${count === 1 ? '' : 's'} · ${savedAt ? 'saved ' + timeAgo(savedAt) : 'not saved yet'}` })
@@ -626,8 +652,7 @@
           disabled: !ready || !!state.busyTarget,
           onclick: () => handleHandoff(target, btn)
         });
-        btn.style.setProperty('--line', target.color);
-        btn.appendChild(h('span', { class: 'stn' }));
+        btn.appendChild(h('span', { class: 'stn', html: slipstreamLogo(target.id, { size: 16 }) }));
         btn.appendChild(h('span', { class: 'tname', text: target.name }));
         if (busy) btn.appendChild(h('span', { class: 'eta', text: 'carrying…' }));
         else btn.appendChild(h('span', { class: 'go', html: ICONS.go }));
@@ -765,7 +790,6 @@
       if (!state.contexts.length) return null;
       const list = h('div', { class: 'history' });
       for (const ctx of state.contexts.slice(0, 6)) {
-        const meta = SLIPSTREAM_PLATFORM_LIST.find((p) => p.id === ctx.platform);
         const item = h('button', {
           class: 'hitem' + (ctx.id === state.selectedId ? ' active' : ''),
           onclick: () => {
@@ -774,9 +798,9 @@
             render();
           }
         });
-        const bar = h('span', { class: 'bar' });
-        bar.style.background = meta?.color || '#6a7280';
-        item.appendChild(bar);
+        item.appendChild(
+          h('span', { class: 'logo', html: slipstreamLogo(ctx.platform, { size: 14 }) })
+        );
         item.appendChild(h('span', { class: 't', text: ctx.title || 'Untitled thread' }));
         item.appendChild(h('span', { class: 'n', text: timeAgo(ctx.capturedAt) }));
         list.appendChild(item);

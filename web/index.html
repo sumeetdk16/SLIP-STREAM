@@ -1,9 +1,10 @@
 <!--
   DIRECTION — Slipstream landing page
-  WORLD: transit interchange. Six assistants are six coloured lines; your
-  context is the passenger. Warm near-black ground, hot orange for the live
-  route, gold for data, deep crimson for closure, cream paper for the one
-  light band. Syne for display, Outfit for text, JetBrains Mono for data.
+  WORLD: transit interchange, drawn the way instrument panels are drawn. Six
+  assistants are six lines; your context is the passenger. Pitch black ground,
+  a grey scale for structure, white as the one thing that acts, and a single
+  red reserved for a closed line. Each assistant is identified by its own mark
+  rather than by a colour. Outfit throughout, JetBrains Mono for data.
   FIRST VIEWPORT: the interchange itself, drawn full width — the Claude line
   stopped by a closure bar, the orange route climbing to the ChatGPT line, a
   token running it on a motion path.
@@ -19,46 +20,58 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
   rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
 />
 
 <style>
   :root {
-    --ink: #100c0a;
-    --panel: #181310;
-    --raised: #231c17;
-    --hair: #372c25;
-    --hair-soft: #261e19;
-    --text: #fbf6ee;
-    --dim: #bcae9f;
-    --faint: #93857a;
-    --live: #ff6a00;
-    --amber: #ffbe00;
-    --stop: #a01520;
-    --flare: #d9461a;
-    --cream: #f5f0e5;
+    /* Pitch black ground, and a grey scale where every step is a level of
+       structure rather than a decoration. No hue in the chrome at all. */
+    --black: #000000;
+    --surface: #0b0b0b;
+    --raised: #161616;
+    --hair: #242424;
+    --hair-hi: #383838;
 
-    --chatgpt: #10a37f;
-    --claude: #d97757;
-    --gemini: #4285f4;
-    --copilot: #4cc2ff;
-    --grok: #9aa3af;
-    --perplexity: #20b0c0;
+    --text: #f5f5f5;
+    --dim: #a3a3a3;
+    --faint: #7a7a7a;
 
-    --display: "Syne", "Helvetica Neue", Helvetica, sans-serif;
+    /* White acts: the primary button is the one full-strength white block. */
+    --accent: #ffffff;
+    --on-accent: #000000;
+
+    /* The only hue on the page, reserved for one meaning: the line is closed. */
+    --danger: #e5484d;
+    --danger-dim: #ff9ea1;
+    /* A filled board needs a darker red than a mark does: white on #e5484d is
+       only 3.91:1, where #b52126 carries it at 6.5:1. */
+    --danger-fill: #b52126;
+
+    /* The one light field on the page, so it has a second material. */
+    --paper: #f2f2f2;
+
     --ui: "Outfit", "Helvetica Neue", Helvetica, system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Radius scale: the diagram is nearly sharp, controls are 6, surfaces 10,
+       and the two full-bleed bands take 14 because at that size a 10 reads as
+       an accident. */
+    --r-flat: 2px;
+    --r: 6px;
+    --r-lg: 10px;
+    --r-band: 14px;
 
     color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
 
-  html { background: var(--ink); color: var(--text); }
+  html { background: var(--black); color: var(--text); }
 
   body {
     margin: 0;
-    background: var(--ink);
+    background: var(--black);
     color: var(--text);
     font-family: var(--ui);
     font-size: 16.5px;
@@ -67,15 +80,15 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  ::selection { background: var(--live); color: #170a01; }
-  :focus-visible { outline: 3px solid var(--live); outline-offset: 3px; }
+  ::selection { background: var(--accent); color: var(--on-accent); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
   ::-webkit-scrollbar { width: 12px; }
-  ::-webkit-scrollbar-thumb { background: var(--hair); border: 4px solid var(--ink); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb { background: var(--hair); border: 4px solid var(--black); border-radius: 99px; }
 
   .wrap { max-width: 1020px; margin: 0 auto; padding-inline: 24px; }
 
-  h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 800; letter-spacing: -0.018em; text-wrap: balance; }
+  h1, h2, h3 { margin: 0; font-family: var(--ui); font-weight: 800; letter-spacing: -0.018em; text-wrap: balance; }
   p { margin: 0; }
   a { color: inherit; }
 
@@ -84,15 +97,15 @@
     position: sticky;
     top: 0;
     z-index: 20;
-    background: rgba(16, 12, 10, 0.9);
+    background: rgba(0, 0, 0, 0.82);
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--hair-soft);
+    border-bottom: 1px solid var(--hair);
   }
   .nav-inner { display: flex; align-items: center; gap: 16px; height: 60px; }
   .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .brand svg { width: 24px; height: 24px; display: block; }
   .brand span {
-    font-family: var(--display);
+    font-family: var(--ui);
     font-weight: 800;
     font-size: 14px;
     letter-spacing: 0.14em;
@@ -104,28 +117,29 @@
   @media (max-width: 680px) { .nav-links a.sm-hide { display: none; } }
 
   /* --------------------------------------------------------------- hero */
-  .hero { padding-top: 72px; padding-bottom: 30px; }
+  .hero { padding-top: 56px; padding-bottom: 30px; }
   h1 {
     font-size: clamp(42px, 7.6vw, 96px);
     line-height: 0.95;
     text-transform: uppercase;
-    max-width: 15ch;
+    max-width: 18ch;
+    color: var(--dim);
   }
-  h1 .y { color: var(--live); }
+  h1 .y { color: var(--accent); }
   .hero .lede {
     margin-top: 24px;
     font-size: 18.5px;
     color: var(--dim);
     max-width: 52ch;
   }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
   .btn {
     font-family: var(--ui);
     font-weight: 700;
     font-size: 14px;
     letter-spacing: 0.01em;
     padding: 13px 20px;
-    border-radius: 8px;
+    border-radius: var(--r);
     border: 1px solid var(--hair);
     background: transparent;
     color: var(--text);
@@ -135,13 +149,14 @@
     gap: 9px;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .btn:hover { background: var(--raised); border-color: #4a3b31; }
-  .btn.primary { background: var(--live); border-color: var(--live); color: #170a01; }
-  .btn.primary:hover { background: #ff8326; border-color: #ff8326; }
+  .btn:hover { background: var(--raised); border-color: var(--hair-hi); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
   .btn svg { width: 15px; height: 15px; display: block; }
 
   /* ------------------------------------------------------ the diagram */
-  .diagram { margin-top: 48px; }
+  .diagram { margin-top: 40px; }
   .diagram svg { width: 100%; height: auto; display: block; overflow: visible; }
 
   .route { animation: draw 0.9s cubic-bezier(0.6, 0, 0.2, 1) 0.15s both; }
@@ -166,23 +181,25 @@
     gap: 10px 26px;
     margin-top: 22px;
     padding-top: 18px;
-    border-top: 1px solid var(--hair-soft);
+    border-top: 1px solid var(--hair);
   }
   .legend span { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; color: var(--dim); }
-  .legend i { width: 20px; height: 5px; border-radius: 1px; display: block; }
+  .legend i + * { letter-spacing: 0.005em; }
+  .legend i { width: 20px; height: 5px; border-radius: var(--r-flat); display: block; }
+  .legend .mk { display: block; color: var(--dim); }
 
   /* ----------------------------------------------------------- section */
-  section { padding-top: 70px; padding-bottom: 70px; border-top: 1px solid var(--hair-soft); }
+  section { padding-top: 70px; padding-bottom: 70px; border-top: 1px solid var(--hair); }
   h2 { font-size: clamp(27px, 4vw, 40px); line-height: 1.06; text-transform: uppercase; font-weight: 700; }
   .lead { margin-top: 14px; font-size: 17px; color: var(--dim); max-width: 56ch; }
   .head { margin-bottom: 38px; }
 
   /* --------------------------------------------------------- disruption */
   .closure {
-    background: var(--stop);
+    background: var(--danger-fill);
     color: #fff;
     padding: 26px 26px 28px;
-    border-radius: 12px;
+    border-radius: var(--r-band);
     display: grid;
     grid-template-columns: 24px 1fr;
     gap: 16px;
@@ -194,10 +211,10 @@
     font-family: var(--mono);
     font-size: 12.5px;
     line-height: 1.6;
-    color: #ffdad3;
+    color: #ffd7d8;
     background: rgba(0, 0, 0, 0.34);
     padding: 8px 11px;
-    border-radius: 6px;
+    border-radius: var(--r);
   }
   .closure .said { margin-top: 16px; font-size: 15.5px; font-weight: 600; color: #fff; max-width: 56ch; }
 
@@ -222,8 +239,8 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    border: 5px solid var(--live);
-    background: var(--ink);
+    border: 5px solid var(--accent);
+    background: var(--black);
   }
   .stop h3 { font-family: var(--ui); font-weight: 600; font-size: 17.5px; letter-spacing: -0.012em; }
   .stop p { margin-top: 8px; font-size: 14.5px; color: var(--dim); }
@@ -238,7 +255,7 @@
   .proof { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
   @media (max-width: 860px) { .proof { grid-template-columns: 1fr; } }
 
-  .slab { background: var(--panel); border-radius: 12px; overflow: hidden; }
+  .slab { background: var(--surface); border-radius: var(--r-lg); overflow: hidden; }
   .slab .cap {
     display: flex;
     align-items: center;
@@ -251,14 +268,15 @@
     text-transform: uppercase;
     color: var(--faint);
   }
-  .slab .cap i { width: 16px; height: 4px; border-radius: 1px; display: block; }
+  .slab .cap i { width: 16px; height: 4px; border-radius: var(--r-flat); display: block; }
+  .slab .cap .mk { display: block; }
   .slab .inner { padding: 16px; }
 
   .turn { display: grid; grid-template-columns: 52px 1fr; gap: 12px; font-size: 14px; }
   .turn + .turn { margin-top: 12px; }
   .turn .who { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding-top: 4px; }
   .turn .said { color: var(--dim); }
-  .turn.cut .said { color: #ff8f72; font-weight: 500; }
+  .turn.cut .said { color: var(--danger-dim); font-weight: 500; }
 
   .brief { display: grid; gap: 12px; }
   .brief .bit { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: baseline; }
@@ -268,7 +286,7 @@
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--amber);
+    color: var(--text);
   }
   .brief dd { margin: 0; font-size: 14px; color: var(--text); }
   @media (max-width: 520px) { .brief .bit { grid-template-columns: 1fr; gap: 3px; } }
@@ -277,26 +295,27 @@
   .lines { display: grid; }
   .lrow {
     display: grid;
-    grid-template-columns: 34px 132px 1fr 92px;
+    grid-template-columns: 24px 132px 1fr 92px;
     align-items: center;
     gap: 18px;
     padding: 15px 0;
   }
-  .lrow + .lrow { border-top: 1px solid var(--hair-soft); }
-  .lrow i { height: 6px; border-radius: 1px; display: block; }
+  .lrow + .lrow { border-top: 1px solid var(--hair); }
+  .lrow .mk { display: block; color: var(--dim); }
+  .lrow:hover .mk { color: var(--text); }
   .lrow .nm { font-weight: 700; font-size: 15px; }
   .lrow .nm em { display: block; font-style: normal; font-weight: 400; font-size: 12px; color: var(--faint); }
   .lrow code { font-family: var(--mono); font-size: 12.5px; color: var(--dim); word-break: break-all; }
   .lrow .cp { font-size: 12.5px; color: var(--faint); text-align: right; }
   @media (max-width: 720px) {
-    .lrow { grid-template-columns: 26px 1fr; gap: 8px 14px; }
+    .lrow { grid-template-columns: 24px 1fr; gap: 8px 14px; }
     .lrow code { grid-column: 2; }
     .lrow .cp { grid-column: 2; text-align: left; }
   }
 
   /* --------------------------------------------------------- enhancer */
   .pair { display: grid; gap: 12px; max-width: 620px; }
-  .pair .box { background: var(--panel); border-radius: 10px; padding: 14px 16px; }
+  .pair .box { background: var(--surface); border-radius: var(--r-lg); padding: 14px 16px; }
   .pair .box b {
     display: block;
     font-family: var(--mono);
@@ -308,31 +327,31 @@
     margin-bottom: 7px;
   }
   .pair .box.after { background: var(--raised); }
-  .pair .box.after b { color: var(--live); }
+  .pair .box.after b { color: var(--accent); }
   .pair .box p { font-size: 15px; color: var(--text); }
   .pair .mid { display: flex; align-items: center; gap: 12px; font-size: 12.5px; color: var(--faint); }
-  .pair .mid svg { width: 16px; height: 16px; display: block; color: var(--live); }
+  .pair .mid svg { width: 16px; height: 16px; display: block; color: var(--accent); }
 
   /* ------------------------------------------------------------- facts */
   .facts { display: grid; }
   .fact { display: grid; grid-template-columns: 170px 1fr; gap: 22px; padding: 17px 0; }
-  .fact + .fact { border-top: 1px solid var(--hair-soft); }
+  .fact + .fact { border-top: 1px solid var(--hair); }
   .fact dt { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding-top: 5px; }
   .fact dd { margin: 0; font-size: 15px; color: var(--dim); }
   .fact dd b { color: var(--text); font-weight: 700; }
   @media (max-width: 560px) { .fact { grid-template-columns: 1fr; gap: 4px; } }
 
   /* ----------------------------------------------------------- install */
-  .install { background: var(--cream); color: #1a1614; border-radius: 14px; padding: 40px 34px; }
-  .install h2 { color: #1a1614; }
-  .install .lead { color: #5c5148; }
+  .install { background: var(--paper); color: var(--black); border-radius: var(--r-band); padding: 40px 34px; }
+  .install h2 { color: var(--black); }
+  .install .lead { color: #4a4a4a; }
   .install ol { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 0; position: relative; }
   .install li {
     position: relative;
     padding: 0 0 22px 38px;
     font-size: 15.5px;
     font-weight: 500;
-    color: #2a2420;
+    color: #1a1a1a;
   }
   .install li:last-child { padding-bottom: 0; }
   .install li::before {
@@ -343,8 +362,8 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 4px solid var(--live);
-    background: var(--cream);
+    border: 4px solid var(--accent);
+    background: var(--paper);
     z-index: 1;
   }
   .install li::after {
@@ -354,26 +373,26 @@
     top: 18px;
     bottom: -2px;
     width: 3px;
-    background: #ccc2b0;
+    background: #cfcfcf;
   }
   .install li:last-child::after { display: none; }
   .install code {
     font-family: var(--mono);
     font-size: 12.5px;
-    background: rgba(26, 22, 20, 0.08);
+    background: rgba(0, 0, 0, 0.07);
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--r-flat);
   }
-  .install .keys { margin-top: 34px; padding-top: 22px; border-top: 3px solid #ddd3c1; display: grid; gap: 10px; }
-  .install .krow { display: flex; align-items: center; justify-content: space-between; gap: 18px; font-size: 14.5px; font-weight: 500; color: #2a2420; }
+  .install .keys { margin-top: 34px; padding-top: 22px; border-top: 3px solid #d9d9d9; display: grid; gap: 10px; }
+  .install .krow { display: flex; align-items: center; justify-content: space-between; gap: 18px; font-size: 14.5px; font-weight: 500; color: #1a1a1a; }
   .install kbd {
     font-family: var(--mono);
     font-size: 12px;
     font-weight: 500;
     padding: 5px 9px;
-    border-radius: 5px;
-    background: #1a1614;
-    color: var(--amber);
+    border-radius: var(--r-flat);
+    background: var(--black);
+    color: var(--text);
     white-space: nowrap;
   }
 
@@ -386,10 +405,10 @@
     align-items: center;
     font-size: 13.5px;
     color: var(--faint);
-    border-top: 1px solid var(--hair-soft);
+    border-top: 1px solid var(--hair);
   }
   footer a { color: var(--dim); text-decoration: none; text-underline-offset: 3px; }
-  footer a:hover { color: var(--live); text-decoration: underline; }
+  footer a:hover { color: var(--accent); text-decoration: underline; }
   footer .sp { margin-left: auto; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -402,8 +421,8 @@
   <div class="wrap nav-inner">
     <a class="brand" href="#top" aria-label="Slipstream">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M2 17h20" stroke="#3a2e26" stroke-width="2.4" stroke-linecap="butt" />
-        <path d="M2 17h4.6l7-10H22" stroke="#ff6a00" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter" />
+        <path d="M2 17h20" stroke="#3a3a3a" stroke-width="2.4" stroke-linecap="butt" />
+        <path d="M2 17h4.6l7-10H22" stroke="#ffffff" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter" />
       </svg>
       <span>Slipstream</span>
     </a>
@@ -421,7 +440,7 @@
     <h1>Switch models without <span class="y">losing speed</span></h1>
     <p class="lede">
       You hit a cap on one assistant and re-explain everything to the next. Slipstream carries the
-      thread across — as a brief the next one can act on, typed into its composer.
+      thread across as a brief the next one can act on, typed into its composer.
     </p>
     <div class="actions">
       <a class="btn primary" href="#install">
@@ -434,35 +453,41 @@
     <div class="diagram">
       <svg viewBox="0 0 640 250" role="img" aria-label="The Claude line stops at a closure; the Slipstream route carries the thread up to the ChatGPT line.">
         <!-- the line you were on -->
-        <path d="M24 200 H240" stroke="var(--claude)" stroke-width="14" stroke-linecap="butt" fill="none" opacity="0.5" />
+        <path d="M24 200 H240" stroke="var(--dim)" stroke-width="14" stroke-linecap="butt" fill="none" opacity="0.5" />
         <!-- where it stops -->
-        <path d="M240 200 H326" stroke="#3a2e26" stroke-width="6" stroke-linecap="butt" stroke-dasharray="10 9" fill="none" />
-        <path d="M332 182 V218" stroke="var(--flare)" stroke-width="9" stroke-linecap="butt" fill="none" />
+        <path d="M240 200 H326" stroke="#3a3a3a" stroke-width="6" stroke-linecap="butt" stroke-dasharray="10 9" fill="none" />
+        <path d="M332 182 V218" stroke="var(--danger)" stroke-width="9" stroke-linecap="butt" fill="none" />
 
         <!-- the route out -->
-        <path class="route" d="M240 200 H320 L440 80 H520" stroke="var(--live)" stroke-width="14"
+        <path class="route" d="M240 200 H320 L440 80 H520" stroke="var(--accent)" stroke-width="14"
               stroke-linecap="butt" stroke-linejoin="miter" fill="none" stroke-dasharray="420" />
 
         <!-- the line you land on -->
-        <path d="M520 80 H616" stroke="var(--chatgpt)" stroke-width="14" stroke-linecap="butt" fill="none" />
+        <path d="M520 80 H616" stroke="var(--text)" stroke-width="14" stroke-linecap="butt" fill="none" />
 
-        <!-- stations -->
-        <circle cx="240" cy="200" r="12" fill="var(--ink)" stroke="var(--text)" stroke-width="6" />
-        <circle cx="520" cy="80" r="12" fill="var(--ink)" stroke="var(--text)" stroke-width="6" />
+        <!-- stations: each one is its assistant's own mark on the line -->
+        <circle cx="240" cy="200" r="17" fill="var(--black)" stroke="var(--dim)" stroke-width="3" />
+        <g transform="translate(228 188)" fill="var(--dim)" fill-rule="evenodd">
+          <path transform="scale(1)" d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" />
+        </g>
+        <circle cx="520" cy="80" r="17" fill="var(--black)" stroke="var(--text)" stroke-width="3" />
+        <g transform="translate(508 68)" fill="var(--text)" fill-rule="evenodd">
+          <path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z" />
+        </g>
 
         <!-- the passenger -->
-        <rect class="token" x="-9" y="-9" width="18" height="18" rx="2" fill="var(--live)" stroke="var(--ink)" stroke-width="3" />
+        <rect class="token" x="-9" y="-9" width="18" height="18" rx="2" fill="var(--accent)" stroke="var(--black)" stroke-width="3" />
 
-        <text x="24" y="172" fill="var(--claude)" font-family="Syne, sans-serif" font-size="21" font-weight="700" letter-spacing="2">CLAUDE</text>
-        <text x="616" y="52" text-anchor="end" fill="var(--chatgpt)" font-family="Syne, sans-serif" font-size="21" font-weight="700" letter-spacing="2">CHATGPT</text>
-        <text x="348" y="205" fill="var(--flare)" font-family="Syne, sans-serif" font-size="19" font-weight="700" letter-spacing="1.5">LIMIT REACHED</text>
-        <text x="250" y="112" fill="var(--live)" font-family="Syne, sans-serif" font-size="19" font-weight="700" letter-spacing="1.5">12 TURNS</text>
+        <text x="24" y="172" fill="var(--dim)" font-family="Outfit, sans-serif" font-size="20" font-weight="600" letter-spacing="1.5">CLAUDE</text>
+        <text x="616" y="52" text-anchor="end" fill="var(--text)" font-family="Outfit, sans-serif" font-size="20" font-weight="600" letter-spacing="1.5">CHATGPT</text>
+        <text x="348" y="205" fill="var(--danger)" font-family="Outfit, sans-serif" font-size="19" font-weight="700" letter-spacing="1.5">LIMIT REACHED</text>
+        <text x="252" y="112" fill="var(--accent)" font-family="Outfit, sans-serif" font-size="18" font-weight="600" letter-spacing="1.2">12 TURNS</text>
       </svg>
 
       <div class="legend">
-        <span><i style="background: var(--claude)"></i>The thread you were in</span>
-        <span><i style="background: var(--live)"></i>The brief Slipstream writes</span>
-        <span><i style="background: var(--chatgpt)"></i>Where you keep working</span>
+        <span><i style="background: var(--dim)"></i>The thread you were in</span>
+        <span><i style="background: var(--accent)"></i>The brief Slipstream writes</span>
+        <span><i style="background: var(--text)"></i>Where you keep working</span>
       </div>
     </div>
   </div>
@@ -496,7 +521,7 @@
       <div class="stops">
         <div class="stop">
           <h3>Reads the live thread</h3>
-          <p>A per-platform adapter walks the real message nodes — roles intact, copy buttons and icons stripped — and re-saves the thread as it grows.</p>
+          <p>A per-platform adapter walks the real message nodes, roles intact and copy buttons stripped, then re-saves the thread as it grows.</p>
         </div>
         <div class="stop">
           <h3>Writes the brief</h3>
@@ -512,20 +537,20 @@
     <section id="brief">
       <div class="head">
         <h2>What actually gets carried</h2>
-        <p class="lead">Not the transcript. A brief built for the assistant receiving it — and the decisions it must not re-litigate.</p>
+        <p class="lead">Not the transcript. A brief built for the assistant receiving it, and the decisions it must not re-litigate.</p>
       </div>
       <div class="proof">
         <div class="slab">
-          <div class="cap"><i style="background: var(--claude)"></i>The thread, cut off</div>
+          <div class="cap"><svg class="mk" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>The thread, cut off</div>
           <div class="inner">
             <div class="turn"><span class="who">You</span><span class="said">Rate-limit the upload endpoint. Redis is already in the stack.</span></div>
-            <div class="turn"><span class="who">Claude</span><span class="said">A sliding window over a sorted set, keyed per API token — 100 requests a minute.</span></div>
+            <div class="turn"><span class="who">Claude</span><span class="said">A sliding window over a sorted set, keyed per API token. 100 requests a minute.</span></div>
             <div class="turn"><span class="who">You</span><span class="said">We run three instances behind the load balancer. No new infrastructure.</span></div>
             <div class="turn cut"><span class="who">Claude</span><span class="said">You are out of free messages until 4:00 PM.</span></div>
           </div>
         </div>
         <div class="slab">
-          <div class="cap"><i style="background: var(--live)"></i>The brief, carried over</div>
+          <div class="cap"><i style="background: var(--accent)"></i>The brief, carried over</div>
           <div class="inner">
             <dl class="brief">
               <div class="bit"><dt>Context</dt><dd>Rate limiting an upload endpoint in an existing Express + Redis service.</dd></div>
@@ -546,37 +571,37 @@
       </div>
       <div class="lines">
         <div class="lrow">
-          <i style="background: var(--chatgpt)"></i>
+          <svg class="mk" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>
           <span class="nm">ChatGPT<em>OpenAI</em></span>
           <code>[data-message-author-role]</code>
           <span class="cp">ProseMirror</span>
         </div>
         <div class="lrow">
-          <i style="background: var(--claude)"></i>
+          <svg class="mk" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>
           <span class="nm">Claude<em>Anthropic</em></span>
           <code>[data-testid="user-message"]</code>
           <span class="cp">ProseMirror</span>
         </div>
         <div class="lrow">
-          <i style="background: var(--gemini)"></i>
+          <svg class="mk" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z"/></svg>
           <span class="nm">Gemini<em>Google</em></span>
           <code>&lt;user-query&gt; / &lt;model-response&gt;</code>
           <span class="cp">Quill</span>
         </div>
         <div class="lrow">
-          <i style="background: var(--copilot)"></i>
+          <svg class="mk" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9 23l.073-.001a2.53 2.53 0 01-2.347-1.838l-.697-2.433a2.529 2.529 0 00-2.426-1.839h-.497l-.104-.002c-4.485 0-2.935-5.278-1.75-9.225l.162-.525C2.412 3.99 3.883 1 6.25 1h8.86c1.12 0 2.106.745 2.422 1.829l.715 2.453a2.53 2.53 0 002.247 1.823l.147.005.534.001c3.557.115 3.088 3.745 2.156 7.206l-.113.413c-.154.548-.315 1.089-.47 1.607l-.163.525C21.588 20.01 20.116 23 17.75 23h-8.75zm8.22-15.89l-3.856.001a2.526 2.526 0 00-2.35 1.615L9.21 15.04a2.529 2.529 0 01-2.43 1.847l3.853.002c1.056 0 1.992-.661 2.361-1.644l1.796-6.287a2.529 2.529 0 012.43-1.848z"/></svg>
           <span class="nm">Copilot<em>Microsoft</em></span>
           <code>[data-content="ai-message"]</code>
           <span class="cp">textarea</span>
         </div>
         <div class="lrow">
-          <i style="background: var(--grok)"></i>
+          <svg class="mk" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>
           <span class="nm">Grok<em>xAI</em></span>
           <code>.message-bubble + row alignment</code>
           <span class="cp">textarea</span>
         </div>
         <div class="lrow">
-          <i style="background: var(--perplexity)"></i>
+          <svg class="mk" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.392 24v-6.465H1.5V7.188h2.884V0l7.053 6.494V.19h1.09v6.49L19.786 0zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397zm-1.099-.08l-5.946 5.398v7.235l5.946-5.234V8.965zm8.136 7.58h1.844V8.349H13.46l6.105 5.54v2.655zm-8.982-8.28H2.59v8.195h1.8v-2.576l6.192-5.62zM5.475 2.476v4.71h5.115l-5.115-4.71zm13.219 0l-5.115 4.71h5.115v-4.71z"/></svg>
           <span class="nm">Perplexity<em>Perplexity AI</em></span>
           <code>[id^="markdown-content"]</code>
           <span class="cp">textarea</span>
@@ -587,7 +612,7 @@
     <section id="enhancer">
       <div class="head">
         <h2>And it sharpens what you type</h2>
-        <p class="lead">Pull what is in the composer, rewrite it, and the sharper prompt goes straight back — with one undo if you preferred your own words.</p>
+        <p class="lead">Pull what is in the composer, rewrite it, and the sharper prompt goes straight back, with one undo if you preferred your own words.</p>
       </div>
       <div class="pair">
         <div class="box">
@@ -601,8 +626,8 @@
         <div class="box after">
           <b>What gets sent</b>
           <p>
-            My REST API slows down on large request payloads. Walk through the likely causes —
-            serialisation, body parsing, and database round-trips — and rank the fixes by impact
+            My REST API slows down on large request payloads. Walk through the likely causes
+            (serialisation, body parsing, and database round-trips) and rank the fixes by impact
             against effort. Start with a short profiling checklist.
           </p>
         </div>
@@ -621,7 +646,7 @@
         </div>
         <div class="fact">
           <dt>Sent</dt>
-          <dd>The thread you are carrying, to <b>api.groq.com</b> — and only when you pick a line or press Enhance.</dd>
+          <dd>The thread you are carrying, to <b>api.groq.com</b>, and only when you pick a line or press Enhance.</dd>
         </div>
         <div class="fact">
           <dt>Never sent</dt>
@@ -642,7 +667,7 @@
           <li>Clone the repo, then run <code>npm run check</code> to verify the build.</li>
           <li>Open <code>chrome://extensions</code> and turn on Developer mode.</li>
           <li>Choose <b>Load unpacked</b> and select the <code>extension/</code> folder.</li>
-          <li>Paste a free key from <code>console.groq.com/keys</code> into settings — or skip it.</li>
+          <li>Paste a free key from <code>console.groq.com/keys</code> into settings, or skip it.</li>
           <li>Open any supported chat. The launcher appears in the corner.</li>
         </ol>
         <div class="keys">
@@ -654,7 +679,7 @@
     </section>
 
     <footer>
-      <span>Slipstream — Chrome Extension APIs, Groq, and no server at all.</span>
+      <span>Slipstream. Chrome Extension APIs, Groq, and no server at all.</span>
       <span class="sp"></span>
       <a href="https://github.com" rel="noopener">Source</a>
       <a href="https://console.groq.com/keys" rel="noopener">Groq keys</a>

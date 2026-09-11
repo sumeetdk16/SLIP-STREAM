@@ -59,6 +59,7 @@
       ],
       "js": [
         "src/shared/platforms.js",
+        "src/shared/logos.js",
         "src/content/adapters.js",
         "src/content/limit-watcher.js",
         "src/content/widget.js",

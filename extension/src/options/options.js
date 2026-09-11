@@ -1,13 +1,13 @@
 /**
  * Slipstream — settings page.
  */
-/* global SLIPSTREAM_PLATFORM_LIST */
+/* global SLIPSTREAM_PLATFORM_LIST, slipstreamLogo */
 (function () {
   'use strict';
 
   const MARK = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M2 17h20" stroke="#333842" stroke-width="2.4" stroke-linecap="butt"/>
-    <path d="M2 17h4.6l7-10H22" stroke="#ffd400" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter"/></svg>`;
+    <path d="M2 17h20" stroke="#3a3a3a" stroke-width="2.4" stroke-linecap="butt"/>
+    <path d="M2 17h4.6l7-10H22" stroke="#ffffff" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter"/></svg>`;
 
   const $ = (id) => document.getElementById(id);
 
@@ -31,7 +31,7 @@
     for (const p of SLIPSTREAM_PLATFORM_LIST) {
       const item = document.createElement('div');
       item.className = 'pitem';
-      item.innerHTML = `<span class="line" style="background:${p.color}"></span>
+      item.innerHTML = `<span class="logo">${slipstreamLogo(p.id, { size: 18 })}</span>
         <span><span class="pn"></span> <span class="pv"></span></span>
         <span class="host"></span>`;
       item.querySelector('.pn').textContent = p.name;

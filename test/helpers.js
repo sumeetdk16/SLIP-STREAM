@@ -22,7 +22,7 @@ export function loadContentScripts(html, { url = 'https://chatgpt.com/c/abc123',
       return this.textContent;
     }
   });
-  for (const file of ['src/shared/platforms.js', 'src/content/adapters.js', ...scripts]) {
+  for (const file of ['src/shared/platforms.js', 'src/shared/logos.js', 'src/content/adapters.js', ...scripts]) {
     window.eval(readSource(file));
   }
   return window;

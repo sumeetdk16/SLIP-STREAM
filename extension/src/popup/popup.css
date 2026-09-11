@@ -1,5 +1,9 @@
 /* Slipstream — toolbar popup. A saved thread opens into the interchange:
-   one trunk, a station for every line you can change to. */
+   one trunk, a station for every line you can change to.
+
+   The authored moment here is that opening: the trunk draws down from the
+   thread it belongs to and the stations arrive along it. It shows the map
+   being built under the thread you picked, which is what the click means. */
 
 body { width: 344px; }
 
@@ -11,13 +15,13 @@ footer {
   align-items: center;
   gap: 8px;
   padding: 11px 16px;
-  border-top: 1px solid var(--hair-soft);
-  background: var(--ink);
+  border-top: 1px solid var(--hair);
+  background: var(--black);
 }
 footer .btn { padding: 7px 11px; font-size: 12px; }
 
 /* -------------------------------------------------------- saved thread */
-.ctx + .ctx { border-top: 1px solid var(--hair-soft); }
+.ctx + .ctx { border-top: 1px solid var(--hair); }
 
 .ctx-head {
   display: flex;
@@ -28,14 +32,18 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
   width: 100%;
   background: none;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--r);
   color: inherit;
   font: inherit;
   text-align: left;
   transition: background 0.14s;
 }
 .ctx-head:hover { background: var(--raised); }
-.ctx .bar { width: 15px; height: 4px; border-radius: 1px; flex: none; }
+.ctx.open .ctx-head { background: var(--raised); }
+/* A saved thread is identified by the assistant's own mark. */
+.ctx .logo { flex: none; display: grid; place-items: center; color: var(--dim); transition: color 0.14s; }
+.ctx .logo svg { display: block; }
+.ctx-head:hover .logo, .ctx.open .logo { color: var(--text); }
 .ctx .info { flex: 1; min-width: 0; display: grid; }
 .ctx .t {
   font-size: 12.5px;
@@ -45,9 +53,30 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ctx .m { display: block; font-size: 11px; color: var(--dim); }
-.ctx .caret { color: var(--faint); transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1); flex: none; display: grid; place-items: center; }
-.ctx.open .caret { transform: rotate(90deg); color: var(--live); }
+.ctx .m {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+  color: var(--dim);
+}
+/* Thread length, same gold gauge the widget uses, at popup scale. */
+.ctx .gauge { margin-top: 6px; height: 3px; }
+.ctx .age {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--faint);
+  flex: none;
+  align-self: center;
+}
+.ctx .caret {
+  color: var(--faint);
+  transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1), color 0.14s;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+.ctx.open .caret { transform: rotate(90deg); color: var(--accent); }
 
 /* the interchange, revealed under the thread it belongs to */
 .ctx-targets {
@@ -65,7 +94,10 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
   bottom: 18px;
   width: 2px;
   background: var(--hair);
+  transform-origin: top;
 }
+.ctx.open .ctx-targets::before { animation: trunk 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes trunk { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 .tbtn {
   position: relative;
@@ -75,7 +107,7 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
   width: 100%;
   padding: 7px 10px 7px 32px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r);
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -85,22 +117,46 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
   cursor: pointer;
   transition: background 0.14s;
 }
-.tbtn::before {
-  content: "";
+/* Stations arrive down the trunk, one after the next, behind the draw. */
+.ctx.open .tbtn { animation: stop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(0.1s + var(--i) * 0.035s); }
+@keyframes stop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* The station is the destination's own mark, sitting on the trunk. It stays
+   grey until you hover it, when it comes up to full white: the line you are
+   about to take is the lit one. */
+.tbtn .logo {
   position: absolute;
-  left: 10px;
+  left: 7px;
   top: 50%;
-  margin-top: -6px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2.5px solid var(--line);
-  background: var(--panel);
-  transition: background 0.14s, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  margin-top: -9px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--faint);
+  transition: color 0.14s, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.tbtn:hover:not(:disabled) { background: color-mix(in srgb, var(--line) 16%, transparent); }
-.tbtn span { transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1); }
-.tbtn:hover:not(:disabled) span { transform: translateX(3px); }
-.tbtn:hover:not(:disabled)::before { background: var(--line); transform: scale(1.15); }
+.tbtn .logo svg { display: block; }
+.tbtn:hover:not(:disabled) { background: var(--raised); }
+.tbtn:hover:not(:disabled) .logo { color: var(--text); transform: scale(1.12); }
+.tbtn .tname { transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1); }
+.tbtn:hover:not(:disabled) .tname { transform: translateX(3px); }
 .tbtn:disabled { color: var(--faint); cursor: default; }
-.tbtn:disabled::before { border-color: var(--hair); }
+.tbtn:disabled .logo { color: var(--hair-hi); }
+
+/* The same departure arrow the widget shows: this is one interchange, drawn
+   twice, so a destination must not behave differently between them. */
+.tbtn .go {
+  margin-left: auto;
+  flex: none;
+  color: var(--faint);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.14s, transform 0.14s;
+}
+.tbtn .go svg { width: 13px; height: 13px; display: block; }
+.tbtn:hover:not(:disabled) .go { opacity: 1; transform: none; }
+.tbtn:disabled .go { display: none; }

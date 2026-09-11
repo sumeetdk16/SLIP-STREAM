@@ -63,7 +63,9 @@
       id: 'copilot',
       name: 'Copilot',
       vendor: 'Microsoft',
-      color: '#0a68c9',
+      // Lifted from Copilot's brand blue: at #0a68c9 it was indistinguishable
+      // from the Gemini line wherever the two sit on the same map.
+      color: '#4cc2ff',
       newChatUrl: 'https://copilot.microsoft.com/',
       hosts: ['copilot.microsoft.com'],
       limitPatterns: [
@@ -77,7 +79,7 @@
       id: 'grok',
       name: 'Grok',
       vendor: 'xAI',
-      color: '#8b8b8b',
+      color: '#9aa3af',
       newChatUrl: 'https://grok.com/',
       hosts: ['grok.com', 'x.com'],
       limitPatterns: [
@@ -91,7 +93,9 @@
       id: 'perplexity',
       name: 'Perplexity',
       vendor: 'Perplexity AI',
-      color: '#20808d',
+      // Lifted from Perplexity's deep teal for the same reason: on the warm
+      // near-black ground the original read as a dark smudge, not a line.
+      color: '#20b0c0',
       newChatUrl: 'https://www.perplexity.ai/',
       hosts: ['www.perplexity.ai'],
       limitPatterns: ['you have reached your pro search limit', 'out of pro searches']
