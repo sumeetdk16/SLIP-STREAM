@@ -37,29 +37,104 @@ three or four messages.
 Without a Groq key everything still works; handoffs fall back to a trimmed transcript that keeps
 the opening turns (the goal) and the final turns (the current state).
 
-## Install
+---
+
+## Run it
+
+There is no build step and no server. The extension is the source tree — Chrome loads
+`extension/` directly, and `npm` is only needed for the checks and tests.
+
+### 1. Get the code
 
 ```bash
 git clone <your-repo-url> slipstream && cd slipstream
 npm install          # jsdom, for the test suite only — the extension itself has no dependencies
-npm run verify       # integrity check + tests
+npm run verify       # integrity check + 45 tests; confirms the tree is loadable
 ```
 
-1. Open `chrome://extensions` and enable **Developer mode**.
-2. **Load unpacked** → select the `extension/` folder.
-3. Optional: paste a free key from [console.groq.com/keys](https://console.groq.com/keys) into
-   the settings page that opens on install.
-4. Open any supported chat — the launcher appears in the corner.
+### 2. Load it into Chrome
+
+1. Open `chrome://extensions`.
+2. Turn on **Developer mode** (top right).
+3. Click **Load unpacked** and select the **`extension/`** folder — not the repo root.
+4. The settings page opens on install. Paste a free key from
+   [console.groq.com/keys](https://console.groq.com/keys) and press **Verify** (optional — see
+   below), then close it.
+5. Open any supported chat (`chatgpt.com`, `claude.ai`, `gemini.google.com`,
+   `copilot.microsoft.com`, `grok.com`, `www.perplexity.ai`). The launcher appears in the
+   bottom-right corner.
+
+**The key is optional.** With one, handoffs are model-written briefs and **Enhance** works.
+Without one, Slipstream still captures, still detects usage caps, and still hands off — using a
+trimmed transcript instead of a brief.
+
+### 3. Use it
+
+| Step | What you do |
+| --- | --- |
+| Capture | Nothing — it captures automatically as the thread grows. <kbd>⌘⇧S</kbd> / <kbd>Ctrl+Shift+S</kbd> forces it. |
+| Hand off | Open the widget, pick a destination from the trunk. The target opens with the brief typed in. |
+| Send | Read what was typed, then press the target's own send button. Slipstream never sends for you. |
+| Enhance | With text in the composer, press **Enhance**. **Undo** restores your original wording. |
 
 | Shortcut | Action |
 | --- | --- |
 | <kbd>⌘⇧K</kbd> / <kbd>Ctrl+Shift+K</kbd> | Show / hide the widget |
 | <kbd>⌘⇧S</kbd> / <kbd>Ctrl+Shift+S</kbd> | Capture the current thread |
 
-## Platform support
+### Reloading after a change
 
-Every chat UI marks up its turns differently, so each gets its own adapter, its own composer
-strategy, and its own limit phrasings.
+Edit a file, then on `chrome://extensions` press **Reload** on the Slipstream card and refresh the
+chat tab. Content-script changes need the tab refresh; service-worker changes only need the
+reload. Inspect the worker's logs with **service worker** on that same card.
+
+### Troubleshooting
+
+| Symptom | Cause |
+| --- | --- |
+| No launcher on the page | Wrong folder loaded (must be `extension/`), or the host isn't one of the six. On `x.com` the widget only runs under `/i/grok`. |
+| Widget says `partial read` | The host shipped new markup and the adapter's selectors missed; capture fell back to the main column's text. Still usable. |
+| Handoff arrives empty | The target's composer didn't mount within 20s. The brief is still on the clipboard — paste it. |
+| `Enhance` does nothing | No Groq key, or the key failed verification. Check the settings page. |
+
+### Packaging
+
+```bash
+npm run zip      # dist/slipstream-<version>.zip, ready for the Chrome Web Store
+```
+
+---
+
+## How it works
+
+### End to end, one handoff
+
+```
+ chat page (content scripts)                  service worker                   target tab
+ ───────────────────────────                  ──────────────                   ──────────
+ MutationObserver fires
+   └─ adapters.capture()  ── CAPTURE_CONTEXT ──▶ sanitize → storage.local
+      (roles + text + threadKey)                 (newest 40 kept)
+ you press a destination
+   └─────────────────── SEND_HANDOFF ──────────▶ buildHandoff()
+                                                  ├─ key?  Groq → 5-section brief
+                                                  └─ none? trimmed transcript
+                                                 queueHandoff() → storage `pending`
+                                                 chrome.tabs → open/focus target ──▶ main.js loads
+                                                 ◀── CONSUME_PENDING ──────────────── applyPendingHandoff()
+                                                                                      waits ≤20s for composer
+                                                                                      adapters.writeComposer()
+                                                                                      you press send
+```
+
+### The four moving parts
+
+**1. Adapters — reading a thread you don't own.** Every chat UI marks its turns up differently,
+so each platform gets its own read strategy, its own composer strategy, and its own limit
+phrasings (`platforms.js` + `adapters.js`). A capture is `{ platform, threadKey, title, messages:
+[{ role, text }] }`. When selectors miss entirely — these products ship new markup often —
+capture degrades to the main column's text and is flagged `partial read` in the widget rather
+than failing.
 
 | Platform | Turns read from | Composer | Thread key |
 | --- | --- | --- | --- |
@@ -70,17 +145,63 @@ strategy, and its own limit phrasings.
 | Grok | `.message-bubble` + row alignment | `textarea` | pathname |
 | Perplexity | `[id^="markdown-content"]`, `.prose` | `textarea` | pathname |
 
-When selectors miss entirely — these products ship new markup often — capture degrades to the
-main column's text and is flagged `partial read` in the widget rather than failing.
+Writing is the harder half. A rich-text composer (ProseMirror, Quill) ignores a plain
+`value =` assignment, so the adapter dispatches the input events the framework actually listens
+for; a `textarea` is set through the native value setter so React sees the change.
 
-## Architecture
+**2. Capture loop — saving without hammering storage.** `main.js` observes `main` (or `body`) and
+debounces 4s after the last mutation. Each capture is fingerprinted
+(`threadKey | message count | last message length`), and an unchanged fingerprint never reaches
+the worker. These apps are SPAs, so `pushState` / `replaceState` are wrapped and `popstate`
+listened to — a history change, not a load, is what moves you between threads; on one, the
+fingerprint resets and any limit banner clears.
+
+**3. Service worker — state, compression, routing.** One `handlers` map, one message envelope
+(`{ type, payload }` → `{ ok, data | error }`). It owns everything persistent:
+
+| Message | From | Does |
+| --- | --- | --- |
+| `CAPTURE_CONTEXT` | content | Sanitize (≤400 messages, ≤20k chars each) and store |
+| `LIST_CONTEXTS` / `GET_CONTEXT` / `DELETE_CONTEXT` / `CLEAR_CONTEXTS` | all | Thread history |
+| `BUILD_HANDOFF` | content | Brief only, for preview and clipboard |
+| `SEND_HANDOFF` | content | Build, queue, open the target tab |
+| `CONSUME_PENDING` | content | Hand the queued brief to a freshly-loaded target — once |
+| `ENHANCE_PROMPT` | content | Rewrite what's in the composer |
+| `LIMIT_DETECTED` / `CLEAR_BADGE` | content | The red `!` toolbar badge |
+| `GET_SETTINGS` / `SET_SETTINGS` / `VERIFY_KEY` | popup, options | Settings; writes rejected from a page |
+
+Storage is `chrome.storage.local` only: `contexts` (newest 40), `settings`, and `pending` — a
+one-shot queue keyed by target platform, so a brief is delivered to exactly one tab and then
+dropped.
+
+**4. Limit watcher — cheap detection.** Each platform declares its own cap phrasings. Scanning a
+long thread in full is prohibitively expensive, so the watcher reads only live regions,
+`role="alert"` / `role="status"` nodes, elements that name a limit, and the block wrapping the
+composer — debounced to one scan every 2.5s. On a hit it captures *first* (the thread you want to
+rescue is the one that just got cut off), then raises the disruption state in the widget.
+
+### Three decisions worth calling out
+
+**The key never reaches a content script.** Chat pages run their own JavaScript in the same origin
+as the content script's DOM access. All Groq calls go through the service worker, which is the
+only context that reads `groqApiKey` — and `SET_SETTINGS` / `VERIFY_KEY` reject any sender that
+isn't the popup or the options page.
+
+**The widget lives in a shadow root.** All six host pages ship aggressive global CSS; a closed
+style boundary is the only way the widget renders identically on every one of them.
+
+**Nothing is ever sent for you.** Slipstream fills the composer and stops. The brief is on screen,
+editable, before a single token leaves for the new model.
+
+### Layout
 
 ```
 extension/
 ├── manifest.json                  MV3: content scripts, commands, host permissions
 ├── src/
 │   ├── shared/
-│   │   ├── platforms.js           Platform registry — hosts, colours, limit phrasings
+│   │   ├── platforms.js           Platform registry — hosts, selectors, brand hues, limit phrasings
+│   │   ├── logos.js               Monochrome 24×24 assistant marks (lobe-icons, MIT)
 │   │   ├── prompts.js             Handoff + enhancer prompts, offline fallback brief
 │   │   └── ui.css                 Shared chrome for popup and options
 │   ├── background/
@@ -96,53 +217,50 @@ extension/
 └── icons/                         Generated by scripts/make_icons.py
 ```
 
-Three decisions worth calling out:
-
-**The key never reaches a content script.** Chat pages run their own JavaScript in the same
-origin as the content script's DOM access. All Groq calls go through the service worker, which
-is the only context that reads `groqApiKey`.
-
-**The widget lives in a shadow root.** All six host pages ship aggressive global CSS; a closed
-style boundary is the only way the widget renders identically on every one of them.
-
-**The limit watcher never scans the whole page.** On a long thread that's prohibitively
-expensive, so it reads only live regions, `role="alert"` / `role="status"` nodes, elements that
-name a limit, and the block wrapping the composer — debounced to one scan every 2.5s.
+---
 
 ## Design
 
-The whole product is drawn as a transit interchange. Each assistant is a line with its own
-colour; your context is the passenger; a handoff is a change of line.
+The whole product is drawn as a transit interchange. Each assistant is a line, your context is
+the passenger, and a handoff is a change of line.
 
-- The widget's destination list is one vertical trunk with a station per assistant — not a grid
-  of cards. Starting a handoff sends a token down that trunk to the station you picked, which is
-  the motion the product actually performs.
+- The widget's destination list is one vertical **trunk** with a **station** per assistant — not a
+  grid of cards. Starting a handoff sends a token down that trunk to the station you picked, which
+  is the motion the product actually performs.
 - A hit usage cap is a **service disruption**: a red board in the panel, a stop bar across the
   launcher, and the destinations sitting right underneath it.
-- The palette is warm: near-black `#100c0a` ground, off-white `#fbf6ee` type, hot orange
-  `#ff6a00` for every primary action, gold `#ffbe00` for data, deep crimson `#a01520` for
-  closure, and one cream field. **Orange acts, gold measures** — the roles never mix. Line
-  colours are the products' real brand hues, so colour in this UI is always data.
-- Type is Syne for display, Outfit for text, JetBrains Mono for data. The extension bundles the
-  first two (67 KB) rather than loading them from a CDN, so a popup never waits on the network.
+- **The chrome is monochrome.** Pitch-black ground, a grey scale for structure, no hue anywhere in
+  the furniture. **White acts** — a primary button is the only full-strength white surface on a
+  page. **One red (`#e5484d`) means one thing: this line is closed.**
+- The exception that earns the greys: **colour names the line.** Each assistant is identified by
+  its own real logo, drawn in `currentColor`, and its real brand hue comes up into its name on
+  hover or when you're on it. So a hue always answers *which assistant*, never *is this
+  important*.
+- Outfit for everything, JetBrains Mono for data, on one six-step scale. Outfit is bundled
+  (variable, one file) rather than loaded from a CDN, so a popup never waits on the network.
 - Flat fills, hairline structure, square-capped icons at one stroke weight, no glow and no
-  gradients. Strokes run at 0°, 45° or 90° only — the rule that makes a transit diagram read as
-  a diagram.
+  gradients. **Every stroke runs at 0°, 45° or 90°** — the rule that makes a transit diagram read
+  as a diagram.
 
-`DESIGN.md` records the tokens and the rules; `PRODUCT.md` records what the product is.
+`DESIGN.md` is the contract: it records the tokens and the rules. `PRODUCT.md` records what the
+product is.
+
+---
 
 ## Development
 
 ```bash
 npm run check    # manifest integrity, file references, host coverage, syntax sweep
-npm test         # 40 tests: adapters and widget in jsdom, limit matching, prompt budgets
+npm test         # 45 tests: adapters and widget in jsdom, limit matching, prompt budgets
 npm run verify   # both
-npm run zip      # dist/slipstream-<version>.zip, ready for the Web Store
+npm run zip      # dist/slipstream-<version>.zip
 ```
 
 Tests run the real content scripts inside jsdom against fixture markup for each platform, so an
-adapter that stops finding turns or a composer fails the suite rather than failing silently in
-the browser.
+adapter that stops finding turns or a composer fails the suite rather than failing silently in the
+browser. **Adding a platform** is: an entry in `platforms.js`, a read/write pair in `adapters.js`,
+the hosts in `manifest.json` (matches, host permissions, web-accessible fonts), and a fixture in
+`test/adapters.test.js` — `npm run check` fails if the manifest and the registry disagree.
 
 ## Privacy
 
@@ -155,7 +273,8 @@ the browser.
 ## Landing page
 
 `web/index.html` is a single dependency-free static file — the interchange diagram in the hero is
-inline SVG, and the token rides the real route with a CSS motion path. Deploy with:
+inline SVG, and the token rides the real route with a CSS motion path. Open it directly in a
+browser to view it; deploy with:
 
 ```bash
 cd web && vercel deploy --prod
