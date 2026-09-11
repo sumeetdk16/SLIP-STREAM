@@ -44,15 +44,30 @@ the opening turns (the goal) and the final turns (the current state).
 There is no build step and no server. The extension is the source tree — Chrome loads
 `extension/` directly, and `npm` is only needed for the checks and tests.
 
-### 1. Get the code
+There are two ways in, and they load *different folders*. Mixing them up is the one mistake
+worth calling out.
+
+### Option A — the ZIP (nothing to build)
+
+Download `slipstream-<version>.zip` from the landing page, unpack it, then:
+
+1. Open `chrome://extensions` (or `edge://extensions`, `brave://extensions`).
+2. Turn on **Developer mode**.
+3. Click **Load unpacked** and select **the unpacked folder itself** — `manifest.json` sits
+   directly inside it.
+
+**Do not run `npm` in that folder.** The ZIP is the extension, not the repo: it has no
+`package.json`, so `npm install` fails with `ENOENT: no such file or directory … package.json`.
+That is expected. If you already ran it, delete the `package-lock.json` and `node_modules` it
+created and load the folder as it came.
+
+### Option B — the repo (tests and checks)
 
 ```bash
 git clone <your-repo-url> slipstream && cd slipstream
 npm install          # jsdom, for the test suite only — the extension itself has no dependencies
 npm run verify       # integrity check + 45 tests; confirms the tree is loadable
 ```
-
-### 2. Load it into Chrome
 
 1. Open `chrome://extensions`.
 2. Turn on **Developer mode** (top right).
@@ -92,6 +107,7 @@ reload. Inspect the worker's logs with **service worker** on that same card.
 
 | Symptom | Cause |
 | --- | --- |
+| `npm error ENOENT … package.json` | You ran npm inside the unpacked ZIP. The ZIP is the extension; npm belongs to the repo. Just load the folder. |
 | No launcher on the page | Wrong folder loaded (must be `extension/`), or the host isn't one of the six. On `x.com` the widget only runs under `/i/grok`. |
 | Widget says `partial read` | The host shipped new markup and the adapter's selectors missed; capture fell back to the main column's text. Still usable. |
 | Handoff arrives empty | The target's composer didn't mount within 20s. The brief is still on the clipboard — paste it. |
@@ -100,8 +116,11 @@ reload. Inspect the worker's logs with **service worker** on that same card.
 ### Packaging
 
 ```bash
-npm run zip      # dist/slipstream-<version>.zip, ready for the Chrome Web Store
+npm run zip      # dist/slipstream-<version>.zip, and a copy into web/ for the landing page
 ```
+
+The zip's root *is* the extension — `manifest.json` at the top level — which is what both the
+Chrome Web Store and **Load unpacked** expect.
 
 ---
 

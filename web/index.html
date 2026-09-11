@@ -503,6 +503,20 @@
     white-space: nowrap;
   }
 
+  /* The one caveat that costs people ten minutes, stated where they hit it. */
+  .note {
+    margin-top: 22px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: var(--r-lg);
+    font-size: var(--t-small);
+    line-height: 1.62;
+    color: var(--dim);
+    max-width: 84ch;
+  }
+  .note b { color: var(--text); font-weight: 700; }
+
   /* A fourth stop on the same line the explainer already uses. */
   .stops.four { grid-template-columns: repeat(4, 1fr); }
   @media (max-width: 980px) and (min-width: 761px) { .stops.four { grid-template-columns: repeat(2, 1fr); row-gap: 34px; } .stops.four::before { display: none; } }
@@ -881,10 +895,10 @@
           </div>
           <span class="where">Windows 10 and 11 · Chrome, Edge, Brave</span>
           <ol>
-            <li><b>Download the ZIP</b> from the top of this page, then right-click it and choose <b>Extract All</b> — for example to <code>C:\Users\you\slipstream</code>. Chrome cannot load an extension from inside a ZIP.</li>
+            <li><b>Download the ZIP</b> from the top of this page, then right-click it and choose <b>Extract All</b> — say to <code>C:\Users\you\slipstream-1.0.0</code>. Chrome cannot load an extension from inside a ZIP.</li>
             <li>Open your browser and go to <code>chrome://extensions</code> — on Edge that address is <code>edge://extensions</code>.</li>
             <li>Turn on <b>Developer mode</b> (top-right on Chrome, left sidebar on Edge).</li>
-            <li>Click <b>Load unpacked</b> and select the <code>extension</code> folder inside the one you extracted.</li>
+            <li>Click <b>Load unpacked</b> and pick <b>the extracted folder itself</b> — the one with <code>manifest.json</code> sitting directly inside it. Do not go a level deeper.</li>
             <li>The settings tab opens. Paste a free key from <code>console.groq.com/keys</code> and press Verify, or skip it.</li>
             <li>Open ChatGPT, Claude, Gemini, Copilot, Grok or Perplexity. The launcher appears in the bottom-right.</li>
           </ol>
@@ -902,12 +916,12 @@
           </div>
           <span class="where">macOS 12+ · Chrome, Edge, Brave, Arc</span>
           <ol>
-            <li><b>Download the ZIP</b> from the top of this page and double-click it to unpack — Finder unzips it beside the file, usually in Downloads.</li>
-            <li>Prefer the source? <code>git clone &lt;repo-url&gt; slipstream</code>, then optionally <code>npm install &amp;&amp; npm run verify</code>.</li>
+            <li><b>Download the ZIP</b> from the top of this page and double-click it — Finder unpacks it beside the file, usually <code>~/Downloads/slipstream-1.0.0</code>.</li>
             <li>Open <code>chrome://extensions</code> in your browser — on Brave that address is <code>brave://extensions</code>.</li>
             <li>Turn on <b>Developer mode</b>, top right.</li>
-            <li>Click <b>Load unpacked</b> and pick the <code>extension</code> folder. In the file dialog, <code>⌘ ⇧ .</code> reveals hidden files if you need it.</li>
+            <li>Click <b>Load unpacked</b> and pick <b>the unpacked folder itself</b> — the one holding <code>manifest.json</code>. In the file dialog, <code>⌘ ⇧ .</code> reveals hidden files if you need it.</li>
             <li>Paste a free Groq key into the settings tab that opens, or skip it, then open any supported chat.</li>
+            <li>Working from a clone instead? Run <code>npm install &amp;&amp; npm run verify</code> at the repo root, then load <code>extension/</code> rather than the repo folder.</li>
           </ol>
           <div class="keyrows">
             <div class="krow2"><span>Show or hide the panel</span><kbd class="k">⌘ ⇧ K</kbd></div>
@@ -915,6 +929,16 @@
             <div class="krow2"><span>Rebind either of them</span><kbd class="k">chrome://extensions/shortcuts</kbd></div>
           </div>
         </div>
+      </div>
+
+      <div class="note">
+        <b>The ZIP is ready to load — there is nothing to build.</b> It holds the extension itself,
+        so <code>manifest.json</code> is at its top level and there is no <code>package.json</code>
+        in it. Running <code>npm install</code> inside the unpacked folder fails with
+        <code>ENOENT: no such file or directory … package.json</code>, and that is expected: npm
+        belongs to the repo, not to the download. If you already ran it, delete the
+        <code>package-lock.json</code> and <code>node_modules</code> it left behind and load the
+        folder as it came.
       </div>
 
       <div class="head" style="margin-top: 56px; margin-bottom: 24px;">
@@ -947,7 +971,7 @@
         <ol>
           <li>Download the ZIP and unpack it, or clone the repo.</li>
           <li>Open <code>chrome://extensions</code> — or <code>edge://extensions</code> — and turn on Developer mode.</li>
-          <li>Choose <b>Load unpacked</b> and select the <code>extension/</code> folder.</li>
+          <li>Choose <b>Load unpacked</b> — the unpacked ZIP folder itself, or <code>extension/</code> if you cloned.</li>
           <li>Paste a free key from <code>console.groq.com/keys</code> into settings, or skip it.</li>
           <li>Open any supported chat. The launcher appears in the corner.</li>
         </ol>
