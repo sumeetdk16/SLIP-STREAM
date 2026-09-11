@@ -61,6 +61,7 @@ test('a saved thread carries its assistant mark, its length and a gauge', async 
   const mark = row.querySelector('.logo svg path');
   assert.ok(mark, 'no mark drawn for the saved thread');
   assert.equal(mark.getAttribute('d'), window.SLIPSTREAM_LOGO_PATHS.claude);
+  assert.equal(row.style.getPropertyValue('--tint'), '#d97757', 'the row must carry the Claude hue');
   assert.match(row.querySelector('.m').textContent, /^Claude · 12 turns$/);
   assert.equal(row.querySelector('.age').textContent, '2h ago');
 
@@ -91,6 +92,8 @@ test('every destination but the thread’s own line is offered, each a station',
     // Each destination is a station on the trunk: its own line colour, its own
     // arrival slot in the stagger, and the departure arrow the widget draws.
     assert.ok(btn.querySelector('.logo svg path'), `${names[i]} has no mark`);
+    // Colour names the line: the row carries that assistant's own brand hue.
+    assert.match(btn.style.getPropertyValue('--tint'), /^#[0-9a-f]{6}$/i, `${names[i]} has no tint`);
     assert.equal(btn.style.getPropertyValue('--i'), String(i));
     assert.ok(btn.querySelector('.go svg'), `${names[i]} has no departure arrow`);
   }

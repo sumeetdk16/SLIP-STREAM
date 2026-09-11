@@ -48,9 +48,10 @@
     right: var(--ss-right, 18px);
     bottom: var(--ss-bottom, 18px);
     font-family: var(--ss-ui);
-    font-size: 13px;
+    font-size: var(--ss-t-body);
     line-height: 1.5;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "lnum" 1, "cv01" 1;
     color: var(--ss-text);
     display: flex;
     flex-direction: column;
@@ -85,6 +86,20 @@
     --ss-ui: "Outfit", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
     --ss-display: "Outfit", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
     --ss-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+    /* Colour names the line: each assistant's real brand hue rides its own
+       mark, and comes up into its name when that is the line you are hovering
+       or already on. Every other piece of type stays on the grey scale. Set
+       per row from the registry. */
+    --ss-tint: var(--ss-dim);
+
+    /* Type scale, the same six steps the popup uses. */
+    --ss-t-micro: 11px;
+    --ss-t-small: 11.5px;
+    --ss-t-body: 13px;
+    --ss-t-mid: 14.5px;
+    --ss-track-micro: .14em;
+    --ss-track-tight: -.012em;
   }
 
   ::selection { background: var(--ss-live); color: var(--ss-on-live); }
@@ -155,9 +170,9 @@
 
   /* the line you are currently riding */
   .now { display: inline-flex; align-items: center; gap: 7px; }
-  .now .logo { display: grid; place-items: center; flex: none; color: var(--ss-text); }
+  .now .logo { display: grid; place-items: center; flex: none; color: var(--ss-tint); }
   .now .logo svg { display: block; }
-  .now .lbl { font-size: 11.5px; font-weight: 600; color: var(--ss-dim); white-space: nowrap; }
+  .now .lbl { font-size: var(--ss-t-small); font-weight: 600; color: var(--ss-tint); white-space: nowrap; letter-spacing: var(--ss-track-tight); }
 
   .iconbtn {
     width: 24px; height: 24px; border-radius: var(--ss-r);
@@ -196,7 +211,7 @@
   .thread .stn {
     width: 15px; height: 15px;
     display: grid; place-items: center;
-    color: var(--ss-text);
+    color: var(--ss-tint);
     margin-top: 3px; flex: none;
   }
   .thread .stn svg { display: block; }
@@ -238,7 +253,7 @@
     text-align: left; cursor: pointer;
     transition: background .14s ease;
   }
-  .target .tname { transition: transform .18s cubic-bezier(.22,1,.36,1); }
+  .target .tname { transition: transform .18s cubic-bezier(.22,1,.36,1), color .14s; }
   /* The station is the destination's own mark, sitting on the trunk. Grey
      until you hover it, then full white: the line you are about to take. */
   .target .stn {
@@ -246,21 +261,23 @@
     width: 18px; height: 18px;
     display: grid; place-items: center;
     background: var(--ss-panel);
-    color: var(--ss-faint);
-    transition: color .14s ease, transform .18s cubic-bezier(.22,1,.36,1);
+    color: var(--ss-tint);
+    transition: transform .18s cubic-bezier(.22,1,.36,1);
   }
   .target .stn svg { display: block; }
   .target .go { margin-left: auto; color: var(--ss-faint); display: grid; place-items: center; opacity: 0; transform: translateX(-4px); transition: opacity .14s, transform .14s; }
   .target .go svg { width: 13px; height: 13px; display: block; }
   .target:hover:not(:disabled) { background: var(--ss-raised); }
-  .target:hover:not(:disabled) .tname { transform: translateX(3px); }
-  .target:hover:not(:disabled) .stn { color: var(--ss-text); transform: scale(1.12); }
+  /* The destination you are about to take says so in its own colour. */
+  .target:hover:not(:disabled) .tname { transform: translateX(3px); color: var(--ss-tint); }
+  .target:hover:not(:disabled) .stn { transform: scale(1.12); }
   .target:hover:not(:disabled) .go { opacity: 1; transform: none; }
   .target:disabled { color: var(--ss-faint); cursor: default; }
+  /* A line you cannot take is drained of its colour. */
   .target:disabled .stn { color: var(--ss-hair-hi); }
   .target.busy { background: var(--ss-raised); }
   .target.busy .tname { transform: translateX(3px); }
-  .target.busy .stn { color: var(--ss-text); }
+  .target.busy .tname { color: var(--ss-tint); }
   .target .eta { font-family: var(--ss-mono); font-size: 10.5px; color: var(--ss-dim); font-weight: 500; letter-spacing: .04em; }
 
   /* ------------------------------------------------------------ buttons */
@@ -328,9 +345,10 @@
   }
   .hitem:hover { background: var(--ss-raised); }
   .hitem.active { background: var(--ss-raised); }
-  .hitem .logo { display: grid; place-items: center; flex: none; color: var(--ss-faint); transition: color .14s; }
+  .hitem .logo { display: grid; place-items: center; flex: none; color: var(--ss-tint); }
   .hitem .logo svg { display: block; }
-  .hitem:hover .logo, .hitem.active .logo { color: var(--ss-text); }
+  .hitem .t { transition: color .14s; }
+  .hitem:hover .t, .hitem.active .t { color: var(--ss-tint); }
   .hitem .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
   .hitem.active .t { font-weight: 650; }
   .hitem .n { font-family: var(--ss-mono); font-size: 10.5px; color: var(--ss-faint); flex: none; }
@@ -447,12 +465,18 @@
     // The line you are riding names itself with its own mark.
     const nowMark = h('span', { class: 'logo', html: slipstreamLogo(platform.id, { size: 15 }) });
 
+    const nowChip = h('span', { class: 'now' }, [
+      nowMark,
+      h('span', { class: 'lbl', text: platform.name })
+    ]);
+    nowChip.style.setProperty('--ss-tint', platform.color);
+
     const panel = h('div', { class: 'panel' }, [
       h('header', {}, [
         h('span', { class: 'mark', html: ICONS.mark }),
         h('span', { class: 'wordmark', text: 'Slipstream' }),
         h('span', { class: 'spacer' }),
-        h('span', { class: 'now' }, [nowMark, h('span', { class: 'lbl', text: platform.name })]),
+        nowChip,
         h('button', {
           class: 'iconbtn',
           title: 'Settings',
@@ -594,6 +618,7 @@
       const fill = Math.min(100, Math.round((count / 30) * 100));
 
       const stn = h('span', { class: 'stn', html: slipstreamLogo(platform.id, { size: 15 }) });
+      stn.style.setProperty('--ss-tint', platform.color);
 
       const meta = h('div', { class: 'meta' }, [
         h('span', { text: `${count} turn${count === 1 ? '' : 's'} · ${savedAt ? 'saved ' + timeAgo(savedAt) : 'not saved yet'}` })
@@ -652,6 +677,7 @@
           disabled: !ready || !!state.busyTarget,
           onclick: () => handleHandoff(target, btn)
         });
+        btn.style.setProperty('--ss-tint', target.color);
         btn.appendChild(h('span', { class: 'stn', html: slipstreamLogo(target.id, { size: 16 }) }));
         btn.appendChild(h('span', { class: 'tname', text: target.name }));
         if (busy) btn.appendChild(h('span', { class: 'eta', text: 'carrying…' }));
@@ -798,6 +824,8 @@
             render();
           }
         });
+        const source = SLIPSTREAM_PLATFORM_LIST.find((p) => p.id === ctx.platform);
+        if (source) item.style.setProperty('--ss-tint', source.color);
         item.appendChild(
           h('span', { class: 'logo', html: slipstreamLogo(ctx.platform, { size: 14 }) })
         );

@@ -31,6 +31,7 @@
     for (const p of SLIPSTREAM_PLATFORM_LIST) {
       const item = document.createElement('div');
       item.className = 'pitem';
+      item.style.setProperty('--tint', p.color);
       item.innerHTML = `<span class="logo">${slipstreamLogo(p.id, { size: 18 })}</span>
         <span><span class="pn"></span> <span class="pv"></span></span>
         <span class="host"></span>`;

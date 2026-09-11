@@ -55,6 +55,24 @@ Everything else is a grey, and each grey is a level of structure rather than a t
 surface, raised, hairline. A measurement — the thread gauge — fills in `dim`, which is the one
 place a plain grey bar is data rather than a control, because it is never clickable.
 
+### Colour names the line
+
+There is one more place colour is allowed, and it is the reason the greys can stay as strict as
+they are: **each assistant's real brand hue rides its own mark, and comes up into its name when
+that is the line you are hovering or already on.**
+
+ChatGPT `#10a37f` · Claude `#d97757` · Gemini `#4285f4` · Copilot `#4cc2ff` · Grok `#9aa3af` ·
+Perplexity `#20b0c0` — read from `platforms.js` and set on the row as `--tint`, so no surface keeps
+its own copy.
+
+The rule this buys: **a hue always answers "which assistant", never "is this important".**
+Importance is white, alarm is the one red, and everything structural is grey, so the six hues never
+have to compete for either job. A destination is its hue at rest and says its own name in that hue
+on hover; a line you cannot take is drained of colour to `hair-hi`.
+
+All six clear 4.5:1 unchanged on all three grounds — `black`, `surface` and the `raised` hover fill
+where the tinted name actually appears — so none needed lifting.
+
 ## The marks
 
 **Each assistant is identified by its own logo, not by a colour swatch.** The marks are the
@@ -76,11 +94,23 @@ that genuinely needs the hue as data has it.
 tight tracking rather than a separate characterful face; a single well-cut geometric sans across
 display and UI is what reads as professional here, and it removed a whole bundled font.
 
-- **Display — Outfit 700/800**, uppercase where it is a headline, `-0.018em`, `line-height: 0.95`.
+**One scale, and nothing between its steps**, so a size is always a decision about rank rather than
+a nudge. In the extension: 11 / 11.5 / 13 / 14.5 / 16 / 19. On the landing page: 11 / 12.5 / 14 /
+16.5 / 18 / 19 / `clamp(27,4vw,40)` / `clamp(40,7.2vw,92)`.
+
+**Tracking moves against size.** It tightens as type grows (`-0.022em` on display, `-0.012em` on
+titles and control names, 0 on body) and opens right up on mono micro-labels (`0.14em` in the
+extension, `0.16em` on the page). That is what keeps the type even in colour across a range from
+11px to 92px, and every micro-label now sits on one tracking value instead of three.
+
+- **Display — Outfit 700/800**, uppercase where it is a headline, `-0.022em`, `line-height: 0.94`.
 - **Text — Outfit 300–700.** Body runs 16.5px / 1.62 on the landing page, 13px in the extension.
 - **Data — mono 400/500** for micro-labels (`STATUS`, `SAVED THREADS`), keycaps, hosts and literal
   code. Mono labels data or shows code, never decoration.
-- `font-variant-numeric: tabular-nums` globally.
+- `font-variant-numeric: tabular-nums` globally, plus `"lnum" 1` — Outfit's default figures sit
+  slightly high against its lowercase, and the lining set lines up with the mono figures beside it.
+- Headings get `text-wrap: balance`, body copy gets `text-wrap: pretty`, so no heading hangs one
+  word and no paragraph ends on a widow.
 - Functional text floor is **11px**. Nothing below it.
 
 **The extension ships its own face.** `extension/fonts/outfit-var-latin.woff2` (32 KB) is declared

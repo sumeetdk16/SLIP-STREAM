@@ -93,9 +93,9 @@ kbd {
   padding: 9px 0;
 }
 .pitem + .pitem { border-top: 1px solid var(--hair); }
-.pitem .logo { display: grid; place-items: center; color: var(--dim); }
+.pitem .logo { display: grid; place-items: center; color: var(--tint); }
 .pitem .logo svg { display: block; }
-.pitem .pn { font-size: 13px; font-weight: 600; }
+.pitem .pn { font-size: 13px; font-weight: 600; letter-spacing: var(--track-tight); }
 .pitem .pv { font-size: 11.5px; color: var(--faint); }
 .pitem .host {
   font-family: var(--mono);

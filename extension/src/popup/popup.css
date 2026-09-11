@@ -41,13 +41,16 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
 .ctx-head:hover { background: var(--raised); }
 .ctx.open .ctx-head { background: var(--raised); }
 /* A saved thread is identified by the assistant's own mark. */
-.ctx .logo { flex: none; display: grid; place-items: center; color: var(--dim); transition: color 0.14s; }
+.ctx .logo { flex: none; display: grid; place-items: center; color: var(--tint); }
 .ctx .logo svg { display: block; }
-.ctx-head:hover .logo, .ctx.open .logo { color: var(--text); }
+/* The title takes the line's hue once the thread is the one you are acting on. */
+.ctx .t { transition: color 0.14s; }
+.ctx-head:hover .t, .ctx.open .t { color: var(--tint); }
 .ctx .info { flex: 1; min-width: 0; display: grid; }
 .ctx .t {
   font-size: 12.5px;
   font-weight: 600;
+  letter-spacing: var(--track-tight);
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -57,8 +60,8 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
   display: block;
   font-family: var(--mono);
   font-size: 10.5px;
-  letter-spacing: 0.01em;
-  color: var(--dim);
+  letter-spacing: 0.02em;
+  color: var(--faint);
 }
 /* Thread length, same gold gauge the widget uses, at popup scale. */
 .ctx .gauge { margin-top: 6px; height: 3px; }
@@ -134,15 +137,17 @@ footer .btn { padding: 7px 11px; font-size: 12px; }
   display: grid;
   place-items: center;
   background: var(--surface);
-  color: var(--faint);
-  transition: color 0.14s, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  color: var(--tint);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tbtn .logo svg { display: block; }
+.tbtn .tname { transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), color 0.14s; }
 .tbtn:hover:not(:disabled) { background: var(--raised); }
-.tbtn:hover:not(:disabled) .logo { color: var(--text); transform: scale(1.12); }
-.tbtn .tname { transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1); }
-.tbtn:hover:not(:disabled) .tname { transform: translateX(3px); }
+.tbtn:hover:not(:disabled) .logo { transform: scale(1.12); }
+/* The destination you are about to take says so in its own colour. */
+.tbtn:hover:not(:disabled) .tname { color: var(--tint); transform: translateX(3px); }
 .tbtn:disabled { color: var(--faint); cursor: default; }
+/* A line you cannot take is drained of its colour. */
 .tbtn:disabled .logo { color: var(--hair-hi); }
 
 /* The same departure arrow the widget shows: this is one interchange, drawn

@@ -63,6 +63,8 @@
       const source = SLIPSTREAM_PLATFORM_LIST.find((p) => p.id === ctx.platform);
       const card = document.createElement('div');
       card.className = 'ctx';
+      // Colour names the line: the row carries its assistant's brand hue.
+      if (source) card.style.setProperty('--tint', source.color);
 
       const head = document.createElement('button');
       head.className = 'ctx-head';
@@ -97,6 +99,7 @@
         btn.className = 'tbtn';
         btn.style.setProperty('--line', target.color);
         btn.style.setProperty('--i', String(i));
+        btn.style.setProperty('--tint', target.color);
         btn.innerHTML =
           `<span class="logo">${slipstreamLogo(target.id, { size: 15 })}</span>` +
           `<span class="tname"></span><span class="go">${GO}</span>`;
@@ -151,6 +154,7 @@
     const pill = $('platform-pill');
     if (currentPlatform) {
       pill.classList.add('ok');
+      pill.style.setProperty('--tint', currentPlatform.color);
       // The line you are on names itself with its own mark, not a swatch.
       pill.querySelector('.bar').outerHTML =
         `<span class="logo">${slipstreamLogo(currentPlatform.id, { size: 14 })}</span>`;

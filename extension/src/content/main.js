@@ -225,7 +225,9 @@
     widget.setContexts(contexts);
   }
 
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, sender) => {
+    // Only our own service worker drives the widget — never the host page.
+    if (sender?.id !== chrome.runtime.id || sender?.tab) return;
     if (msg?.type === 'CMD_TOGGLE') widget?.toggle();
     if (msg?.type === 'CMD_CAPTURE') {
       captureNow({ manual: true })

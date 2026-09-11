@@ -21,6 +21,59 @@ const DEFAULT_SETTINGS = {
   autoFillTarget: true
 };
 
+/**
+ * Settings a content script is allowed to see. The Groq key is deliberately
+ * absent: content scripts share a process with pages we do not control, so the
+ * key never leaves the service worker except as an Authorization header.
+ */
+const CONTENT_SAFE_SETTINGS = ['widgetEnabled', 'autoCapture', 'limitAlerts', 'autoFillTarget'];
+
+/** Every setting that may be written, with the shape it must have. */
+const SETTING_TYPES = {
+  groqApiKey: 'string',
+  model: 'string',
+  widgetEnabled: 'boolean',
+  autoCapture: 'boolean',
+  limitAlerts: 'boolean',
+  autoFillTarget: 'boolean'
+};
+
+function publicSettings(settings) {
+  const out = {};
+  for (const key of CONTENT_SAFE_SETTINGS) out[key] = settings[key];
+  out.model = settings.model;
+  out.hasGroqKey = !!settings.groqApiKey;
+  return out;
+}
+
+/**
+ * A message from a tab is a content script; one without a tab is an extension
+ * page (popup or options). Only the latter is privileged — it is the only
+ * surface where the user themselves is typing.
+ */
+function isPrivilegedSender(sender) {
+  return !sender?.tab;
+}
+
+/** Rejects anything that is not this extension talking from a supported page. */
+function isTrustedSender(sender) {
+  if (sender?.id !== chrome.runtime.id) return false;
+  if (!sender.tab) return true;
+  return !!slipstreamPlatformForUrl(sender.tab.url);
+}
+
+/** Drops unknown keys and wrong types rather than writing them to storage. */
+function sanitizeSettingsPatch(patch) {
+  const clean = {};
+  for (const [key, type] of Object.entries(SETTING_TYPES)) {
+    if (!Object.prototype.hasOwnProperty.call(patch || {}, key)) continue;
+    const value = patch[key];
+    if (typeof value !== type) continue;
+    clean[key] = type === 'string' ? value.slice(0, 512) : value;
+  }
+  return clean;
+}
+
 /* ------------------------------------------------------------------ storage */
 
 async function getSettings() {
@@ -55,6 +108,37 @@ function transcriptFrom(messages) {
     out = '[…earlier turns trimmed…]\n\n' + out.slice(-MAX_TRANSCRIPT_CHARS);
   }
   return out;
+}
+
+const MAX_MESSAGES = 400;
+const MAX_MESSAGE_CHARS = 20000;
+const MAX_TITLE_CHARS = 300;
+
+/**
+ * Captures arrive from a content script on a page we do not control, so the
+ * platform is taken from the sender's own tab rather than the payload, and
+ * every field is bounded before it reaches storage.
+ */
+function sanitizeCapture(capture, sender) {
+  const platform = slipstreamPlatformForUrl(sender?.tab?.url);
+  if (!platform) throw new Error('Captures are only accepted from a supported chat page.');
+
+  const messages = (Array.isArray(capture?.messages) ? capture.messages : [])
+    .slice(0, MAX_MESSAGES)
+    .map((m) => ({
+      role: m?.role === 'user' ? 'user' : 'assistant',
+      text: String(m?.text ?? '').slice(0, MAX_MESSAGE_CHARS)
+    }))
+    .filter((m) => m.text);
+
+  return {
+    platform: platform.id,
+    title: String(capture?.title ?? '').slice(0, MAX_TITLE_CHARS),
+    url: sender.tab.url,
+    threadKey: String(capture?.threadKey ?? sender.tab.url).slice(0, 512),
+    messages,
+    auto: !!capture?.auto
+  };
 }
 
 /**
@@ -173,6 +257,10 @@ async function openTarget(targetPlatformId) {
 /* ----------------------------------------------------------------- enhancer */
 
 async function enhancePrompt({ raw, platformId, context }) {
+  // Bounded before it becomes a paid API call, so a runaway page cannot turn
+  // the enhancer into an expensive relay.
+  raw = String(raw ?? '').slice(0, 8000);
+  if (!raw.trim()) throw new Error('Nothing in the composer to enhance.');
   const settings = await getSettings();
   if (!settings.groqApiKey) {
     const err = new Error('Add a Groq API key in Slipstream settings to use the enhancer.');
@@ -187,7 +275,7 @@ async function enhancePrompt({ raw, platformId, context }) {
     user: SlipstreamPrompts.enhancerUser({
       raw,
       platform: platform?.name,
-      context: context ? context.slice(0, 2000) : ''
+      context: context ? String(context).slice(0, 2000) : ''
     }),
     temperature: 0.4,
     maxTokens: 700
@@ -202,7 +290,7 @@ async function broadcastSettings(settings) {
   const tabs = await chrome.tabs.query({ url: urls });
   await Promise.all(
     tabs.map((t) =>
-      chrome.tabs.sendMessage(t.id, { type: 'SETTINGS_CHANGED', payload: settings }).catch(() => {})
+      chrome.tabs.sendMessage(t.id, { type: 'SETTINGS_CHANGED', payload: publicSettings(settings) }).catch(() => {})
     )
   );
 }
@@ -215,12 +303,16 @@ const handlers = {
     return { settings: { ...settings, groqApiKey: settings.groqApiKey ? '••••' : '' }, contexts };
   },
 
-  async GET_SETTINGS() {
-    return getSettings();
+  async GET_SETTINGS(_payload, sender) {
+    const settings = await getSettings();
+    return isPrivilegedSender(sender) ? settings : publicSettings(settings);
   },
 
-  async SET_SETTINGS({ patch }) {
-    const next = await setSettings(patch);
+  async SET_SETTINGS({ patch }, sender) {
+    // Only the popup and the options page may write settings; a content script
+    // must never be able to swap the API key out from under the user.
+    if (!isPrivilegedSender(sender)) throw new Error('Settings are not writable from a page.');
+    const next = await setSettings(sanitizeSettingsPatch(patch));
     await broadcastSettings(next);
     return next;
   },
@@ -230,13 +322,14 @@ const handlers = {
     return { ok: true };
   },
 
-  async VERIFY_KEY({ apiKey }) {
+  async VERIFY_KEY({ apiKey }, sender) {
+    if (!isPrivilegedSender(sender)) throw new Error('Key verification is not available from a page.');
     await SlipstreamGroq.verifyKey(apiKey);
     return { ok: true };
   },
 
-  async CAPTURE_CONTEXT({ capture }) {
-    const entry = await storeContext(capture);
+  async CAPTURE_CONTEXT({ capture }, sender) {
+    const entry = await storeContext(sanitizeCapture(capture, sender));
     return { context: { ...entry, messages: undefined } };
   },
 
@@ -306,7 +399,11 @@ const handlers = {
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  const handler = handlers[msg?.type];
+  if (!isTrustedSender(sender)) {
+    sendResponse({ ok: false, error: 'Untrusted sender.' });
+    return false;
+  }
+  const handler = Object.prototype.hasOwnProperty.call(handlers, msg?.type) ? handlers[msg.type] : null;
   if (!handler) {
     sendResponse({ ok: false, error: `Unknown message: ${msg?.type}` });
     return false;

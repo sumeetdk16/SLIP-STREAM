@@ -39,6 +39,14 @@
      attention with anything that is merely important. */
   --danger: #e5484d;
   --danger-dim: #ff9ea1;
+
+  /* Colour names the line. Each assistant's real brand hue rides its own mark,
+     and comes up into its name when that line is the one you are hovering or
+     already on. Every other piece of type stays on the grey scale, so a hue on
+     this page always means "this is which assistant", never "this is pretty".
+     All six clear 4.5:1 on the panel ground unchanged; none needed lifting.
+     The per-row value is set from the registry as --tint. */
+  --tint: var(--dim);
   /* A filled board needs a darker red than a mark does: white on #e5484d is
      only 3.91:1, where #b52126 carries it at 6.5:1. */
   --danger-fill: #b52126;
@@ -54,6 +62,22 @@
 
   --ui: "Outfit", ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  /* Type scale. Six steps and nothing between them, so a size is always a
+     decision about rank rather than a nudge. Tracking tightens as the size
+     grows and opens up as it shrinks, which is how type stays even in colour
+     across a 2.2x range. */
+  --t-micro: 11px;    /* mono labels, keycaps      */
+  --t-small: 11.5px;  /* captions under a control  */
+  --t-body: 13px;     /* the panel's reading size  */
+  --t-mid: 14.5px;    /* a control that leads      */
+  --t-title: 16px;    /* section heads             */
+  --t-lead: 19px;     /* the one line that opens   */
+
+  --track-micro: 0.14em;
+  --track-tight: -0.012em;
+  --track-tighter: -0.02em;
+
   color-scheme: dark;
 }
 
@@ -64,11 +88,17 @@ body {
   background: var(--surface);
   color: var(--text);
   font-family: var(--ui);
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.55;
   font-variant-numeric: tabular-nums;
+  /* Outfit's default figures sit slightly high against its lowercase; the
+     lining set lines up with the mono figures beside it. */
+  font-feature-settings: "lnum" 1, "cv01" 1;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+p { text-wrap: pretty; }
 
 ::selection { background: var(--accent); color: var(--on-accent); }
 
@@ -108,9 +138,9 @@ a:hover { text-decoration: underline; }
 /* -------------------------------------------------------------- type */
 .label {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--track-micro);
   text-transform: uppercase;
   color: var(--faint);
   margin: 0 0 10px;
@@ -194,8 +224,8 @@ input::placeholder { color: var(--faint); }
 }
 .toggle + .toggle { border-top: 1px solid var(--hair); }
 .toggle .text { flex: 1; }
-.toggle .text b { display: block; font-size: 12.5px; font-weight: 620; }
-.toggle .text span { font-size: 11.5px; color: var(--dim); }
+.toggle .text b { display: block; font-size: 12.5px; font-weight: 620; letter-spacing: var(--track-tight); }
+.toggle .text span { font-size: var(--t-small); color: var(--dim); line-height: 1.45; }
 .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
 .switch {
   width: 34px;
@@ -233,9 +263,8 @@ input::placeholder { color: var(--faint); }
   white-space: nowrap;
 }
 .pill .bar { width: 15px; height: 4px; border-radius: var(--r-flat); background: var(--faint); flex: none; }
-.pill .logo { display: grid; place-items: center; flex: none; color: var(--dim); }
+.pill .logo { display: grid; place-items: center; flex: none; color: var(--tint); }
 .pill .logo svg { display: block; }
-.pill.ok .logo { color: var(--text); }
 .pill.ok .bar { background: var(--text); }
 .pill.err .bar { background: var(--danger); }
 
@@ -262,7 +291,7 @@ input::placeholder { color: var(--faint); }
   line-height: 1.55;
 }
 
-.status { font-size: 11.5px; margin: 9px 0 0; min-height: 17px; color: var(--dim); }
+.status { font-size: var(--t-small); margin: 9px 0 0; min-height: 17px; color: var(--dim); }
 .status.ok { color: var(--text); }
 .status.err { color: var(--danger-dim); }
 
