@@ -466,6 +466,86 @@
   .fact dd b { color: var(--text); font-weight: 700; }
   @media (max-width: 560px) { .fact { grid-template-columns: 1fr; gap: 4px; } }
 
+
+  /* ---------------------------------------------------------- benefits */
+  .gains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: var(--r-lg); overflow: hidden; }
+  .gain { background: var(--surface); padding: 26px 24px 28px; display: grid; align-content: start; gap: 9px; }
+  .gain .n { font-family: var(--mono); font-size: var(--t-micro); font-weight: 500; letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--faint); }
+  .gain h3 { font-size: var(--t-h3); letter-spacing: var(--track-tight); }
+  .gain p { font-size: var(--t-small); line-height: 1.6; color: var(--dim); }
+  .gain b { color: var(--text); font-weight: 700; }
+  @media (max-width: 900px) { .gains { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .gains { grid-template-columns: 1fr; } }
+
+  /* ------------------------------------------------------------ manual */
+  .manual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .manual { grid-template-columns: 1fr; } }
+  .os {
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: var(--r-lg);
+    padding: 24px 24px 26px;
+  }
+  .os .osname { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .os .osname svg { width: 18px; height: 18px; display: block; color: var(--text); }
+  .os .osname h3 { font-size: var(--t-h3); letter-spacing: var(--track-tight); }
+  .os .where { font-family: var(--mono); font-size: var(--t-micro); letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--faint); }
+  .os ol { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 12px; counter-reset: step; }
+  .os li {
+    position: relative;
+    padding-left: 34px;
+    font-size: var(--t-small);
+    line-height: 1.62;
+    color: var(--dim);
+    counter-increment: step;
+  }
+  .os li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 22px;
+    height: 20px;
+    font-family: var(--mono);
+    font-size: var(--t-micro);
+    color: var(--faint);
+    border: 1px solid var(--hair);
+    border-radius: var(--r-flat);
+    display: grid;
+    place-items: center;
+  }
+  .os li b { color: var(--text); font-weight: 700; }
+  .os code, .use code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--raised);
+    border-radius: var(--r-flat);
+    padding: 2px 6px;
+    color: var(--text);
+  }
+  .os .keyrows { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--hair); display: grid; gap: 9px; }
+  .krow2 { display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: var(--t-small); color: var(--dim); }
+  kbd.k {
+    font-family: var(--mono);
+    flex: none;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    background: var(--raised);
+    border: 1px solid var(--hair-hi);
+    border-radius: var(--r);
+    padding: 4px 9px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  /* ------------------------------------------------------ how to use it */
+  .use { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: var(--r-lg); overflow: hidden; }
+  @media (max-width: 720px) { .use { grid-template-columns: 1fr; } }
+  .step { background: var(--surface); padding: 22px 22px 24px; display: grid; gap: 8px; align-content: start; }
+  .step .n { font-family: var(--mono); font-size: var(--t-micro); letter-spacing: var(--track-micro); color: var(--accent); text-transform: uppercase; }
+  .step h3 { font-size: 16.5px; letter-spacing: var(--track-tight); }
+  .step p { font-size: var(--t-small); line-height: 1.6; color: var(--dim); }
+
   /* ----------------------------------------------------------- install */
   .install { background: var(--paper); color: var(--black); border-radius: var(--r-band); padding: 40px 34px; }
   .install h2 { color: var(--black); }
@@ -552,8 +632,9 @@
       <span>Slipstream</span>
     </a>
     <nav class="nav-links">
-      <a href="#how" class="sm-hide">How it moves</a>
-      <a href="#lines" class="sm-hide">The lines</a>
+      <a href="#how" class="sm-hide">How it works</a>
+      <a href="#gains" class="sm-hide">Why bother</a>
+      <a href="#manual" class="sm-hide">Manual</a>
       <a href="#privacy" class="sm-hide">Privacy</a>
       <a href="#install">Install</a>
     </nav>
@@ -578,32 +659,62 @@
    </div>
 
     <div class="diagram">
+      <div class="rail">
+        <span>Handoff — Claude to ChatGPT</span>
+        <span class="live">Route open</span>
+      </div>
       <svg viewBox="8 28 634 200" role="img" aria-label="The Claude line stops at a closure; the Slipstream route carries the thread up to the ChatGPT line.">
-        <!-- the line you were on -->
-        <path d="M24 200 H240" stroke="var(--claude)" stroke-width="14" stroke-linecap="butt" fill="none" opacity="0.55" />
+        <defs>
+          <linearGradient id="gClaude" gradientUnits="userSpaceOnUse" x1="8" y1="200" x2="240" y2="200">
+            <stop offset="0" stop-color="#d97757" stop-opacity="0.35" />
+            <stop offset="1" stop-color="#ff9269" />
+          </linearGradient>
+          <linearGradient id="gGpt" gradientUnits="userSpaceOnUse" x1="520" y1="80" x2="642" y2="80">
+            <stop offset="0" stop-color="#12c496" />
+            <stop offset="1" stop-color="#0c8f6f" stop-opacity="0.55" />
+          </linearGradient>
+          <linearGradient id="gRoute" gradientUnits="userSpaceOnUse" x1="240" y1="200" x2="520" y2="80">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.8" />
+            <stop offset="0.55" stop-color="#ffffff" />
+            <stop offset="1" stop-color="#ffffff" />
+          </linearGradient>
+          <filter id="glow" filterUnits="userSpaceOnUse" x="-20" y="0" width="700" height="260">
+            <feGaussianBlur stdDeviation="7" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="glowSoft" filterUnits="userSpaceOnUse" x="-20" y="0" width="700" height="260">
+            <feGaussianBlur stdDeviation="4" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        <!-- the line you were on: it runs in from off-panel, at full strength -->
+        <path d="M8 200 H240" stroke="url(#gClaude)" stroke-width="14" stroke-linecap="butt" fill="none" filter="url(#glowSoft)" />
         <!-- where it stops -->
-        <path d="M240 200 H326" stroke="#3a3a3a" stroke-width="6" stroke-linecap="butt" stroke-dasharray="10 9" fill="none" />
-        <path d="M332 182 V218" stroke="var(--danger)" stroke-width="9" stroke-linecap="butt" fill="none" />
+        <path d="M240 200 H326" stroke="#4a4a4a" stroke-width="6" stroke-linecap="butt" stroke-dasharray="10 9" fill="none" />
+        <path d="M332 178 V222" stroke="var(--danger)" stroke-width="9" stroke-linecap="butt" fill="none" filter="url(#glow)" />
 
         <!-- the route out -->
-        <path class="route" d="M240 200 H320 L440 80 H520" stroke="var(--accent)" stroke-width="14"
-              stroke-linecap="butt" stroke-linejoin="miter" fill="none" stroke-dasharray="420" />
+        <path class="route" d="M240 200 H320 L440 80 H520" stroke="url(#gRoute)" stroke-width="14"
+              stroke-linecap="butt" stroke-linejoin="miter" fill="none" stroke-dasharray="420" filter="url(#glow)" />
 
-        <!-- the line you land on -->
-        <path d="M520 80 H616" stroke="var(--chatgpt)" stroke-width="14" stroke-linecap="butt" fill="none" />
+        <!-- the line you land on: it runs out off-panel, because you keep going -->
+        <path d="M520 80 H642" stroke="url(#gGpt)" stroke-width="14" stroke-linecap="butt" fill="none" filter="url(#glowSoft)" />
 
         <!-- stations: each one is its assistant's own mark on the line -->
-        <circle cx="240" cy="200" r="17" fill="var(--black)" stroke="var(--claude)" stroke-width="3" />
+        <circle cx="240" cy="200" r="25" fill="var(--claude)" opacity="0.16" />
+        <circle cx="240" cy="200" r="17" fill="#0a0a0a" stroke="var(--claude)" stroke-width="3" filter="url(#glowSoft)" />
         <g transform="translate(228 188)" fill="var(--claude)" fill-rule="evenodd">
           <path transform="scale(1)" d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" />
         </g>
-        <circle cx="520" cy="80" r="17" fill="var(--black)" stroke="var(--chatgpt)" stroke-width="3" />
+        <circle cx="520" cy="80" r="25" fill="var(--chatgpt)" opacity="0.18" />
+        <circle cx="520" cy="80" r="17" fill="#0a0a0a" stroke="var(--chatgpt)" stroke-width="3" filter="url(#glowSoft)" />
         <g transform="translate(508 68)" fill="var(--chatgpt)" fill-rule="evenodd">
           <path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z" />
         </g>
 
         <!-- the passenger -->
-        <rect class="token" x="-9" y="-9" width="18" height="18" rx="2" fill="var(--accent)" stroke="var(--black)" stroke-width="3" />
+        <rect class="token" x="-10" y="-10" width="20" height="20" rx="4" fill="var(--accent)" stroke="#0a0a0a" stroke-width="3" filter="url(#glow)" />
 
         <text x="24" y="172" fill="var(--claude)" font-family="Outfit, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">CLAUDE</text>
         <text x="616" y="52" text-anchor="end" fill="var(--chatgpt)" font-family="Outfit, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">CHATGPT</text>
@@ -657,6 +768,45 @@
         <div class="stop">
           <h3>Types it into the next one</h3>
           <p>Pick a line. Slipstream opens that assistant, finds its composer and fills the brief in. You read it, then press send.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="gains">
+      <div class="head">
+        <h2>What you get out of it</h2>
+        <p class="lead">Slipstream is a Chrome extension that reads the conversation you are already in, writes it down as a brief, and types that brief into a different assistant. That buys you six things.</p>
+      </div>
+      <div class="gains">
+        <div class="gain">
+          <span class="n">01 / Momentum</span>
+          <h3>A cap stops the model, not you</h3>
+          <p>When an assistant cuts you off, the work usually stops with it. Slipstream captures the thread the moment the notice appears and offers the other five lines <b>right there</b>.</p>
+        </div>
+        <div class="gain">
+          <span class="n">02 / Time</span>
+          <h3>No fourth re-explanation</h3>
+          <p>Every switch normally costs the same four messages: the goal, the decisions, the constraints, the next step. The brief carries all four in <b>one paste</b>.</p>
+        </div>
+        <div class="gain">
+          <span class="n">03 / Fit</span>
+          <h3>Use the right model per step</h3>
+          <p>Draft on one, reason on another, check on a third. Switching stops being expensive, so you pick the model that suits the <b>step</b>, not the one that has your history.</p>
+        </div>
+        <div class="gain">
+          <span class="n">04 / Control</span>
+          <h3>You press send, always</h3>
+          <p>The brief is typed into the composer and left there. You read it, edit it, or throw it away. <b>Nothing is sent on your behalf</b>, ever.</p>
+        </div>
+        <div class="gain">
+          <span class="n">05 / Privacy</span>
+          <h3>No server, no account</h3>
+          <p>Threads stay in your browser's local storage. The only request that ever leaves is to Groq, carrying the thread you chose to hand off. <b>There is no Slipstream backend</b>.</p>
+        </div>
+        <div class="gain">
+          <span class="n">06 / Cost</span>
+          <h3>Free, and optional at that</h3>
+          <p>The Groq key is free and takes a minute. Without one the extension still captures, still spots caps, and still hands off using a <b>trimmed transcript</b>.</p>
         </div>
       </div>
     </section>
@@ -786,20 +936,97 @@
       </dl>
     </section>
 
+    <section id="manual">
+      <div class="head">
+        <h2>Install it — Windows or macOS</h2>
+        <p class="lead">The same unpacked extension runs on both. It works in any Chromium browser on either system: Chrome, Edge, Brave, Opera, Arc. There is no build step and nothing to compile.</p>
+      </div>
+      <div class="manual">
+        <div class="os">
+          <div class="osname">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.5-1v7H3v-6zM11.5 4.3L21 3v8.5h-9.5v-7.2zM3 12.5h7.5v7L3 18.5v-6zM11.5 12.5H21V21l-9.5-1.3v-7.2z"/></svg>
+            <h3>Windows</h3>
+          </div>
+          <span class="where">Windows 10 / 11 · Chrome, Edge, Brave</span>
+          <ol>
+            <li>Download the repo as a ZIP from GitHub and <b>extract it</b> — for example to <code>C:\Users\you\slipstream</code>. Do not load it from inside the ZIP.</li>
+            <li>Open your browser and go to <code>chrome://extensions</code> — on Edge that address is <code>edge://extensions</code>.</li>
+            <li>Turn on <b>Developer mode</b> (top-right on Chrome, left sidebar on Edge).</li>
+            <li>Click <b>Load unpacked</b> and select the <code>extension</code> folder inside the one you extracted.</li>
+            <li>The settings tab opens. Paste a free key from <code>console.groq.com/keys</code> and press Verify, or skip it.</li>
+            <li>Open ChatGPT, Claude, Gemini, Copilot, Grok or Perplexity. The launcher appears in the bottom-right.</li>
+          </ol>
+          <div class="keyrows">
+            <div class="krow2"><span>Show or hide the panel</span><kbd class="k">Ctrl + Shift + K</kbd></div>
+            <div class="krow2"><span>Capture the current thread</span><kbd class="k">Ctrl + Shift + S</kbd></div>
+            <div class="krow2"><span>Rebind either of them</span><kbd class="k">chrome://extensions/shortcuts</kbd></div>
+          </div>
+        </div>
+
+        <div class="os">
+          <div class="osname">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.3 12.7c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.5 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.1 0 1.9-1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.3-.9-2.3-3.3zM14.2 5.7c.6-.7 1-1.7.9-2.7-.9 0-2 .6-2.6 1.3-.6.6-1.1 1.7-.9 2.7 1 .1 2-.5 2.6-1.3z"/></svg>
+            <h3>macOS</h3>
+          </div>
+          <span class="where">macOS 12+ · Chrome, Edge, Brave, Arc</span>
+          <ol>
+            <li>Clone it in Terminal: <code>git clone &lt;repo-url&gt; slipstream</code>, or download and unzip it to your home folder.</li>
+            <li>Optional sanity check: <code>cd slipstream &amp;&amp; npm install &amp;&amp; npm run verify</code>.</li>
+            <li>Open <code>chrome://extensions</code> in your browser — on Brave that address is <code>brave://extensions</code>.</li>
+            <li>Turn on <b>Developer mode</b>, top right.</li>
+            <li>Click <b>Load unpacked</b> and pick the <code>extension</code> folder. In the file dialog, <code>⌘ ⇧ .</code> reveals hidden files if you need it.</li>
+            <li>Paste a free Groq key into the settings tab that opens, or skip it, then open any supported chat.</li>
+          </ol>
+          <div class="keyrows">
+            <div class="krow2"><span>Show or hide the panel</span><kbd class="k">⌘ ⇧ K</kbd></div>
+            <div class="krow2"><span>Capture the current thread</span><kbd class="k">⌘ ⇧ S</kbd></div>
+            <div class="krow2"><span>Rebind either of them</span><kbd class="k">chrome://extensions/shortcuts</kbd></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="head" style="margin-top: 56px; margin-bottom: 24px;">
+        <h2>Then, day to day</h2>
+        <p class="lead">Four moves. Only two of them need you to do anything.</p>
+      </div>
+      <div class="use">
+        <div class="step">
+          <span class="n">Move 01</span>
+          <h3>Just talk to the assistant</h3>
+          <p>Capture is automatic: the thread is re-saved a few seconds after each new turn. Nothing to press. To force it, use the capture shortcut for your system.</p>
+        </div>
+        <div class="step">
+          <span class="n">Move 02</span>
+          <h3>Open the panel and pick a line</h3>
+          <p>Click the launcher in the corner, or use the toggle shortcut. The destinations sit on one vertical trunk — click the assistant you want to continue on.</p>
+        </div>
+        <div class="step">
+          <span class="n">Move 03</span>
+          <h3>Read the brief it typed</h3>
+          <p>The target opens in a new tab with the brief already in its composer: <code>CONTEXT</code>, <code>ESTABLISHED</code>, <code>CONSTRAINTS</code>, <code>STATE</code>, <code>NEXT</code>. Edit it if you like — then press that assistant's own send button.</p>
+        </div>
+        <div class="step">
+          <span class="n">Move 04</span>
+          <h3>Sharpen anything you type</h3>
+          <p>With a half-written prompt in the composer, press <b>Enhance</b> in the panel. It rewrites it in place, and <b>Undo</b> puts your wording back untouched.</p>
+        </div>
+      </div>
+    </section>
+
     <section id="install">
       <div class="install">
-        <h2>Running in a minute</h2>
-        <p class="lead">Unpacked, from source. No build step, no dependencies. The Groq key is optional and free.</p>
+        <h2>The short version</h2>
+        <p class="lead">Unpacked, from source, on Windows or macOS. No build step, no dependencies, no account. The Groq key is optional and free.</p>
         <ol>
-          <li>Clone the repo, then run <code>npm run check</code> to verify the build.</li>
-          <li>Open <code>chrome://extensions</code> and turn on Developer mode.</li>
+          <li>Clone or download the repo, then optionally run <code>npm run check</code>.</li>
+          <li>Open <code>chrome://extensions</code> — or <code>edge://extensions</code> — and turn on Developer mode.</li>
           <li>Choose <b>Load unpacked</b> and select the <code>extension/</code> folder.</li>
           <li>Paste a free key from <code>console.groq.com/keys</code> into settings, or skip it.</li>
           <li>Open any supported chat. The launcher appears in the corner.</li>
         </ol>
         <div class="keys">
-          <div class="krow"><span>Show or hide the panel</span><kbd>⌘ ⇧ K</kbd></div>
-          <div class="krow"><span>Capture the current thread</span><kbd>⌘ ⇧ S</kbd></div>
+          <div class="krow"><span>Show or hide the panel</span><kbd>⌘ ⇧ K · Ctrl ⇧ K</kbd></div>
+          <div class="krow"><span>Capture the current thread</span><kbd>⌘ ⇧ S · Ctrl ⇧ S</kbd></div>
           <div class="krow"><span>Drag the launcher anywhere</span><kbd>it stays there</kbd></div>
         </div>
       </div>
