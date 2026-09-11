@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Slipstream — Settings</title>
+  <link rel="stylesheet" href="../shared/ui.css" />
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="topbar">
+    <span class="mark" id="mark"></span>
+    <span class="name">Slipstream</span>
+    <span class="ver" id="version"></span>
+  </div>
+
+  <main>
+    <div class="welcome card" id="welcome" hidden>
+      <b>Slipstream is on.</b>
+      <p>
+        Open ChatGPT, Claude, Gemini, Copilot or Grok — the launcher appears in the corner of the
+        page. Add a Groq key below and handoffs arrive compressed instead of pasted whole.
+      </p>
+    </div>
+
+    <section>
+      <h2>Groq API</h2>
+      <p class="sub">
+        Groq's free tier (LLaMA 3.3 70B) compresses a thread into a handoff brief and rewrites prompts.
+        The key is stored in this browser and sent only to <code>api.groq.com</code>. Everything else
+        works without it.
+      </p>
+      <div class="card">
+        <div class="field">
+          <label for="apiKey">API key</label>
+          <div class="row">
+            <input type="password" id="apiKey" placeholder="gsk_…" autocomplete="off" spellcheck="false" />
+            <button class="btn" id="reveal" type="button" title="Show or hide">Show</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="model">Model</label>
+          <select id="model">
+            <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B — versatile (recommended)</option>
+            <option value="llama-3.1-8b-instant">LLaMA 3.1 8B — instant (fastest)</option>
+            <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
+            <option value="qwen/qwen3-32b">Qwen 3 32B</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top: 12px">
+          <button class="btn primary" id="save">Save</button>
+          <button class="btn" id="verify">Test connection</button>
+          <span class="spacer"></span>
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="ext">Get a free key<svg
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"
+            aria-hidden="true"><path d="M8 16 16 8M9 8h7v7" /></svg></a>
+        </div>
+        <p id="key-status" class="status"></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Behaviour</h2>
+      <div class="card" style="padding-block: 2px">
+        <label class="toggle">
+          <span class="text"><b>Floating widget</b><span>Show the launcher on supported chat pages</span></span>
+          <input type="checkbox" id="widgetEnabled" /><span class="switch"></span>
+        </label>
+        <label class="toggle">
+          <span class="text"><b>Auto-capture</b><span>Keep the open thread saved as it grows, so it is always ready to move</span></span>
+          <input type="checkbox" id="autoCapture" /><span class="switch"></span>
+        </label>
+        <label class="toggle">
+          <span class="text"><b>Limit alerts</b><span>Watch for usage-cap notices and offer a change of line</span></span>
+          <input type="checkbox" id="limitAlerts" /><span class="switch"></span>
+        </label>
+        <label class="toggle">
+          <span class="text"><b>Auto-fill the destination</b><span>Type the brief into the next assistant's composer for you</span></span>
+          <input type="checkbox" id="autoFillTarget" /><span class="switch"></span>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Shortcuts</h2>
+      <div class="card keys">
+        <div class="krow"><span>Show / hide the widget</span><kbd id="k-toggle">⌘⇧K</kbd></div>
+        <div class="krow"><span>Capture the current thread</span><kbd id="k-capture">⌘⇧S</kbd></div>
+        <p class="sub" style="margin: 10px 0 0">
+          Rebind these at <code>chrome://extensions/shortcuts</code>.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>The lines</h2>
+      <div class="card platforms" id="platforms"></div>
+    </section>
+
+    <section>
+      <h2>Data</h2>
+      <div class="card">
+        <p class="sub" style="margin-top: 0">
+          Captured threads live in this browser's local extension storage and never leave it, except as
+          the brief you explicitly carry over. The 40 most recent threads are kept.
+        </p>
+        <div class="row">
+          <button class="btn" id="export">Export threads</button>
+          <button class="btn danger" id="clear">Delete all threads</button>
+          <span class="spacer"></span>
+          <span id="ctx-count" class="pill"><span class="bar"></span><span>—</span></span>
+        </div>
+        <p id="data-status" class="status"></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="../shared/platforms.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

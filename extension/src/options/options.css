@@ -1,0 +1,131 @@
+/* Slipstream — settings. Read as a route plan: a single spine of sections,
+   each one a stop, with the six lines shown as the map they are. */
+
+main {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 30px 24px 70px;
+}
+
+section { margin-bottom: 34px; }
+
+h2 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+}
+
+.sub {
+  font-size: 13px;
+  color: var(--dim);
+  margin: 0 0 13px;
+  max-width: 64ch;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------- welcome */
+.welcome {
+  margin-bottom: 30px;
+  background: var(--live);
+  border: 0;
+  color: #170a01;
+  padding: 15px 16px;
+}
+.welcome b { font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.welcome p { margin: 4px 0 0; font-size: 12.5px; color: #3a1a02; max-width: 62ch; }
+
+/* -------------------------------------------------------------- fields */
+.field + .field { margin-top: 13px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 6px;
+}
+.field .row .btn { flex: none; }
+
+/* ----------------------------------------------------------- shortcuts */
+.keys .krow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  padding: 9px 0;
+}
+.keys .krow + .krow { border-top: 1px solid var(--hair-soft); }
+.keys .krow:first-child { padding-top: 0; }
+kbd {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: var(--raised);
+  border: 1px solid var(--hair);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------- the lines */
+/* Six lines on one map: a colour, a name, and where it runs. */
+.platforms { padding-block: 4px; }
+.pitem {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+}
+.pitem + .pitem { border-top: 1px solid var(--hair-soft); }
+.pitem .line { height: 5px; border-radius: 1px; }
+.pitem .pn { font-size: 13px; font-weight: 600; }
+.pitem .pv { font-size: 11.5px; color: var(--faint); }
+.pitem .host {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* --------------------------------------------------------------- data */
+.facts { display: grid; }
+.fact {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 18px;
+  padding: 12px 0;
+  font-size: 13px;
+}
+.fact + .fact { border-top: 1px solid var(--hair-soft); }
+.fact:first-child { padding-top: 0; }
+.fact dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding-top: 3px;
+}
+.fact dd { margin: 0; color: var(--dim); }
+.fact dd b { color: var(--text); font-weight: 650; }
+@media (max-width: 560px) {
+  .fact { grid-template-columns: 1fr; gap: 3px; }
+  .pitem { grid-template-columns: 26px 1fr; }
+  .pitem .host { display: none; }
+}
+
+.ext { display: inline-flex; align-items: center; gap: 5px; }
+.ext svg { width: 13px; height: 13px; display: block; }

@@ -1,0 +1,106 @@
+/* Slipstream — toolbar popup. A saved thread opens into the interchange:
+   one trunk, a station for every line you can change to. */
+
+body { width: 344px; }
+
+main { padding: 15px 16px 12px; }
+section + section { margin-top: 20px; }
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--hair-soft);
+  background: var(--ink);
+}
+footer .btn { padding: 7px 11px; font-size: 12px; }
+
+/* -------------------------------------------------------- saved thread */
+.ctx + .ctx { border-top: 1px solid var(--hair-soft); }
+
+.ctx-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 9px;
+  cursor: pointer;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  transition: background 0.14s;
+}
+.ctx-head:hover { background: var(--raised); }
+.ctx .bar { width: 15px; height: 4px; border-radius: 1px; flex: none; }
+.ctx .info { flex: 1; min-width: 0; display: grid; }
+.ctx .t {
+  font-size: 12.5px;
+  font-weight: 600;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ctx .m { display: block; font-size: 11px; color: var(--dim); }
+.ctx .caret { color: var(--faint); transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1); flex: none; display: grid; place-items: center; }
+.ctx.open .caret { transform: rotate(90deg); color: var(--live); }
+
+/* the interchange, revealed under the thread it belongs to */
+.ctx-targets {
+  display: none;
+  position: relative;
+  padding: 2px 0 10px;
+  margin-left: 9px;
+}
+.ctx.open .ctx-targets { display: block; }
+.ctx-targets::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 4px;
+  bottom: 18px;
+  width: 2px;
+  background: var(--hair);
+}
+
+.tbtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px 7px 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.tbtn::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  margin-top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2.5px solid var(--line);
+  background: var(--panel);
+  transition: background 0.14s, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tbtn:hover:not(:disabled) { background: color-mix(in srgb, var(--line) 16%, transparent); }
+.tbtn span { transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1); }
+.tbtn:hover:not(:disabled) span { transform: translateX(3px); }
+.tbtn:hover:not(:disabled)::before { background: var(--line); transform: scale(1.15); }
+.tbtn:disabled { color: var(--faint); cursor: default; }
+.tbtn:disabled::before { border-color: var(--hair); }

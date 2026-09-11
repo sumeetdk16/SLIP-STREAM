@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Slipstream</title>
+  <link rel="stylesheet" href="../shared/ui.css" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="topbar">
+    <span class="mark" id="mark"></span>
+    <span class="name">Slipstream</span>
+    <span class="ver" id="version"></span>
+  </div>
+
+  <main>
+    <section>
+      <p class="label">Status</p>
+      <div class="card">
+        <div class="row">
+          <span id="platform-pill" class="pill"><span class="bar"></span><span id="platform-name">Not on an AI site</span></span>
+          <span class="spacer"></span>
+          <span id="key-pill" class="pill"><span class="bar"></span><span id="key-text">No Groq key</span></span>
+        </div>
+        <p id="hint" class="status"></p>
+      </div>
+    </section>
+
+    <section>
+      <p class="label">Preferences</p>
+      <div class="card" style="padding-block: 2px">
+        <label class="toggle">
+          <span class="text"><b>Floating widget</b><span>Show the launcher on supported chat pages</span></span>
+          <input type="checkbox" id="widgetEnabled" /><span class="switch"></span>
+        </label>
+        <label class="toggle">
+          <span class="text"><b>Auto-capture</b><span>Keep this thread saved as it grows</span></span>
+          <input type="checkbox" id="autoCapture" /><span class="switch"></span>
+        </label>
+        <label class="toggle">
+          <span class="text"><b>Limit alerts</b><span>Offer a change of line when you hit a cap</span></span>
+          <input type="checkbox" id="limitAlerts" /><span class="switch"></span>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <p class="label">Saved threads <span class="spacer"></span><span id="ctx-count" class="count"></span></p>
+      <div id="contexts"></div>
+    </section>
+  </main>
+
+  <footer>
+    <button class="btn" id="open-options">Settings</button>
+    <span class="spacer"></span>
+    <button class="btn danger" id="clear">Clear all</button>
+  </footer>
+
+  <script src="../shared/platforms.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
