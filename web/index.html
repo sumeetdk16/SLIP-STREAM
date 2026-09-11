@@ -114,7 +114,7 @@
   ::-webkit-scrollbar { width: 12px; }
   ::-webkit-scrollbar-thumb { background: var(--hair); border: 4px solid var(--black); border-radius: 99px; }
 
-  .wrap { max-width: 1020px; margin: 0 auto; padding-inline: 24px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: 24px; }
 
   h1, h2, h3 { margin: 0; font-family: var(--ui); font-weight: 800; letter-spacing: var(--track-tighter); text-wrap: balance; }
   p { margin: 0; text-wrap: pretty; }
@@ -145,21 +145,36 @@
   @media (max-width: 680px) { .nav-links a.sm-hide { display: none; } }
 
   /* --------------------------------------------------------------- hero */
-  .hero { padding-top: 56px; padding-bottom: 30px; }
+  /* Copy on the left, the route on the right: the page states the problem
+     and shows the manoeuvre in the same glance, without a scroll. */
+  .hero {
+    padding-top: 64px;
+    padding-bottom: 44px;
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: center;
+    gap: 40px 60px;
+  }
   h1 {
-    font-size: var(--t-h1);
+    font-size: clamp(36px, 4.4vw, 60px);
     line-height: 0.94;
     text-transform: uppercase;
-    max-width: 18ch;
+    max-width: 15ch;
     color: var(--dim);
   }
   h1 .y { color: var(--accent); }
   .hero .lede {
-    margin-top: 24px;
+    margin-top: 22px;
     font-size: var(--t-lead);
     line-height: 1.55;
     color: var(--dim);
-    max-width: 54ch;
+    max-width: 44ch;
+  }
+  /* One column below the width where the headline stops holding its own. */
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; gap: 36px; padding-top: 52px; }
+    h1 { font-size: clamp(38px, 8.2vw, 62px); max-width: 18ch; }
+    .hero .lede { max-width: 54ch; }
   }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
   .btn {
@@ -185,8 +200,14 @@
   .btn svg { width: 15px; height: 15px; display: block; }
 
   /* ------------------------------------------------------ the diagram */
-  .diagram { margin-top: 40px; }
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: var(--r-lg);
+    padding: 26px 26px 22px;
+  }
   .diagram svg { width: 100%; height: auto; display: block; overflow: visible; }
+  @media (max-width: 960px) { .diagram { padding: 22px 20px 18px; } }
 
   .route { animation: draw 0.9s cubic-bezier(0.6, 0, 0.2, 1) 0.15s both; }
   @keyframes draw { from { stroke-dashoffset: 420; } to { stroke-dashoffset: 0; } }
@@ -206,12 +227,13 @@
 
   .legend {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px 26px;
-    margin-top: 22px;
-    padding-top: 18px;
+    flex-direction: column;
+    gap: 9px;
+    margin-top: 20px;
+    padding-top: 16px;
     border-top: 1px solid var(--hair);
   }
+  @media (max-width: 960px) { .legend { flex-direction: row; flex-wrap: wrap; gap: 10px 24px; } }
   .legend span { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; color: var(--dim); }
   .legend i + * { letter-spacing: 0.005em; }
   .legend i { width: 20px; height: 5px; border-radius: var(--r-flat); display: block; }
@@ -469,6 +491,7 @@
 
 <main id="top">
   <div class="wrap hero">
+   <div class="hero-copy">
     <h1>Switch models without <span class="y">losing speed</span></h1>
     <p class="lede">
       You hit a cap on one assistant and re-explain everything to the next. Slipstream carries the
@@ -481,9 +504,10 @@
       </a>
       <a class="btn" href="https://github.com" rel="noopener">Read the source</a>
     </div>
+   </div>
 
     <div class="diagram">
-      <svg viewBox="0 0 640 250" role="img" aria-label="The Claude line stops at a closure; the Slipstream route carries the thread up to the ChatGPT line.">
+      <svg viewBox="8 28 634 200" role="img" aria-label="The Claude line stops at a closure; the Slipstream route carries the thread up to the ChatGPT line.">
         <!-- the line you were on -->
         <path d="M24 200 H240" stroke="var(--claude)" stroke-width="14" stroke-linecap="butt" fill="none" opacity="0.55" />
         <!-- where it stops -->
@@ -510,10 +534,10 @@
         <!-- the passenger -->
         <rect class="token" x="-9" y="-9" width="18" height="18" rx="2" fill="var(--accent)" stroke="var(--black)" stroke-width="3" />
 
-        <text x="24" y="172" fill="var(--claude)" font-family="Outfit, sans-serif" font-size="20" font-weight="600" letter-spacing="1.5">CLAUDE</text>
-        <text x="616" y="52" text-anchor="end" fill="var(--chatgpt)" font-family="Outfit, sans-serif" font-size="20" font-weight="600" letter-spacing="1.5">CHATGPT</text>
-        <text x="348" y="205" fill="var(--danger)" font-family="Outfit, sans-serif" font-size="19" font-weight="700" letter-spacing="1.5">LIMIT REACHED</text>
-        <text x="252" y="112" fill="var(--accent)" font-family="Outfit, sans-serif" font-size="18" font-weight="600" letter-spacing="1.2">12 TURNS</text>
+        <text x="24" y="172" fill="var(--claude)" font-family="Outfit, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">CLAUDE</text>
+        <text x="616" y="52" text-anchor="end" fill="var(--chatgpt)" font-family="Outfit, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">CHATGPT</text>
+        <text x="348" y="205" fill="var(--danger)" font-family="Outfit, sans-serif" font-size="20" font-weight="700" letter-spacing="1.5">LIMIT REACHED</text>
+        <text x="252" y="112" fill="var(--accent)" font-family="Outfit, sans-serif" font-size="20" font-weight="700" letter-spacing="1.2">12 TURNS</text>
       </svg>
 
       <div class="legend">
