@@ -93,7 +93,11 @@ function sanitizeSettingsPatch(patch) {
 
 async function getSettings() {
   const { settings } = await chrome.storage.local.get('settings');
-  return { ...DEFAULT_SETTINGS, ...(settings || {}) };
+  const merged = { ...DEFAULT_SETTINGS, ...(settings || {}) };
+  // A model id saved before Groq retired it would otherwise 404 every request
+  // and leave the options dropdown blank. Heal it on the way out.
+  merged.model = SlipstreamGroq.normalizeModel(merged.model);
+  return merged;
 }
 
 async function setSettings(patch) {
@@ -211,7 +215,7 @@ async function buildHandoff({ contextId, targetPlatformId }) {
           transcript: transcriptFrom(ctx.messages)
         }),
         temperature: 0.2,
-        maxTokens: 800
+        maxTokens: 1400
       });
       summarized = true;
     } catch (err) {
@@ -293,7 +297,7 @@ async function enhancePrompt({ raw, platformId, context }) {
       context: context ? String(context).slice(0, 2000) : ''
     }),
     temperature: 0.4,
-    maxTokens: 700
+    maxTokens: 1300
   });
 }
 

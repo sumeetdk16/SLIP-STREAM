@@ -75,8 +75,18 @@
     }
 
     const json = await res.json();
-    const text = json?.choices?.[0]?.message?.content;
-    if (!text) throw new GroqError('Groq returned an empty response.', 'empty');
+    const choice = json?.choices?.[0];
+    const text = choice?.message?.content;
+    if (!text) {
+      // The GPT-OSS models reason before they speak, and that reasoning is
+      // billed against max_tokens. Too small a budget returns finish_reason
+      // 'length' with an empty content string, which is a budget problem
+      // wearing the costume of a broken model.
+      if (choice?.finish_reason === 'length') {
+        throw new GroqError('Groq ran out of token budget before replying.', 'truncated');
+      }
+      throw new GroqError('Groq returned an empty response.', 'empty');
+    }
     return text.trim();
   }
 
@@ -86,7 +96,9 @@
       model,
       system: 'Reply with the single word OK.',
       user: 'ping',
-      maxTokens: 5,
+      // Reasoning models spend ~55 tokens thinking before the first content
+      // token, so a tight budget here fails a perfectly good key.
+      maxTokens: 256,
       temperature: 0
     });
     return true;

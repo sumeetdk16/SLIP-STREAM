@@ -66,3 +66,53 @@ test('another extension gets nothing', async () => {
   assert.equal(res.ok, false);
   assert.match(res.error, /Untrusted/);
 });
+
+test('a model id Groq has retired is healed on read instead of 404-ing forever', async () => {
+  const { send } = loadServiceWorker({
+    storage: { settings: { model: 'llama-3.3-70b-versatile', groqApiKey: 'gsk_live' } }
+  });
+  const res = await send('GET_SETTINGS', {}, optionsSender);
+  assert.equal(res.data.model, 'openai/gpt-oss-120b');
+});
+
+test('Test connection tests the model the dropdown is showing, not the default', async () => {
+  const { send } = loadServiceWorker();
+  const seen = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    seen.push(JSON.parse(init.body).model);
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { choices: [{ message: { content: 'OK' }, finish_reason: 'stop' }] };
+      }
+    };
+  };
+  try {
+    const res = await send('VERIFY_KEY', { apiKey: 'gsk_live', model: 'qwen/qwen3.8-27b' }, optionsSender);
+    assert.equal(res.ok, true);
+    assert.deepEqual(seen, ['qwen/qwen3.8-27b']);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test('a reasoning model that spends its whole budget thinking says so', async () => {
+  const { send } = loadServiceWorker();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    async json() {
+      return { choices: [{ message: { content: '' }, finish_reason: 'length' }] };
+    }
+  });
+  try {
+    const res = await send('VERIFY_KEY', { apiKey: 'gsk_live', model: 'openai/gpt-oss-120b' }, optionsSender);
+    assert.equal(res.ok, false);
+    assert.match(res.error, /token budget/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
