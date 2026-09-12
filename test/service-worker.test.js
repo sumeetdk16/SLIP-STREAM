@@ -129,6 +129,62 @@ test('the model list is built from Groq, with speech and classifier models filte
   }
 });
 
+test('a reasoning scratchpad never reaches the brief', async () => {
+  const { send } = loadServiceWorker({ storage: { settings: { groqApiKey: 'gsk_live' } } });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    async json() {
+      return {
+        choices: [
+          { message: { content: '<think>weighing the options</think>\nCONTEXT — the real brief' }, finish_reason: 'stop' }
+        ]
+      };
+    }
+  });
+  try {
+    const res = await send('VERIFY_KEY', { apiKey: 'gsk_live', model: 'qwen/qwen3.6-27b' }, optionsSender);
+    assert.equal(res.ok, true);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const { loadWorkerModule } = await import('./helpers.js');
+  const groq = loadWorkerModule('src/background/groq.js').SlipstreamGroq;
+  assert.equal(groq.stripReasoning('<think>noise</think>\nCONTEXT — real'), 'CONTEXT — real');
+  assert.equal(groq.stripReasoning('CONTEXT — untouched'), 'CONTEXT — untouched');
+  // qwen3.6 opens the tag and never closes it; the regex pair alone misses that.
+  assert.equal(
+    groq.stripReasoning('<think>\nrambling\n\nCONTEXT — real brief'),
+    'CONTEXT — real brief'
+  );
+});
+
+test('the agentic Compound models are kept out of the handoff list', async () => {
+  const { send } = loadServiceWorker({ storage: { settings: { groqApiKey: 'gsk_live' } } });
+  const realFetch = globalThis.fetch;
+  const text = { active: true, input_modalities: ['text'], output_modalities: ['text'], context_length: 131072 };
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    async json() {
+      return {
+        data: [
+          { id: 'groq/compound', name: 'Compound', ...text },
+          { id: 'groq/compound-mini', name: 'Compound Mini', ...text },
+          { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B', ...text }
+        ]
+      };
+    }
+  });
+  try {
+    const res = await send('LIST_MODELS', {}, optionsSender);
+    assert.deepEqual(res.data.models.map((m) => m.id), ['openai/gpt-oss-120b']);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test('a page cannot ask the worker to enumerate models', async () => {
   const { send } = loadServiceWorker({ storage: { settings: { groqApiKey: 'gsk_live' } } });
   const res = await send('LIST_MODELS', {}, pageSender);

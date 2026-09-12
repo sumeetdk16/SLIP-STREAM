@@ -38,7 +38,11 @@
       (m.input_modalities || []).includes('text') &&
       JSON.stringify(m.output_modalities || []) === JSON.stringify(['text']) &&
       (m.context_length || 0) >= 32768 &&
-      !String(m.id).includes('guard')
+      !String(m.id).includes('guard') &&
+      // Compound is an agentic system, not a plain chat model: it answers the
+      // transcript's question instead of summarising it, and it may hand thread
+      // content to a web search on the way. Wrong tool for a handoff brief.
+      !String(m.id).startsWith('groq/compound')
     );
   }
 
@@ -69,6 +73,24 @@
       this.name = 'GroqError';
       this.code = code || 'unknown';
     }
+  }
+
+  /**
+   * Some reasoning models emit their scratchpad as a <think> block inside the
+   * content rather than in a separate field. That must never reach the brief:
+   * the brief gets pasted verbatim into the next assistant's composer.
+   */
+  function stripReasoning(text) {
+    if (typeof text !== 'string') return text;
+    let out = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    if (/<\/think>/i.test(out)) out = out.replace(/^[\s\S]*?<\/think>/i, '');
+    // An unclosed <think> is the nastier case: cut from the tag to the first
+    // line that reads like the brief proper, so a leak cannot reach the paste.
+    if (/<think>/i.test(out)) {
+      const heading = out.search(/^[A-Z][A-Z ]{3,}(?:\s*[—:-])/m);
+      out = heading > -1 ? out.slice(heading) : out.replace(/<think>[\s\S]*$/i, '');
+    }
+    return out.trim();
   }
 
   async function chat(opts) {
@@ -103,6 +125,9 @@
         signal: controller.signal,
         body: JSON.stringify({
           model: normalizeModel(model),
+          // Reasoning models otherwise inline their scratchpad in the content,
+          // and the brief is pasted verbatim into the next assistant.
+          reasoning_format: 'hidden',
           temperature,
           max_tokens: maxTokens,
           messages: [
@@ -127,7 +152,7 @@
 
     const json = await res.json();
     const choice = json?.choices?.[0];
-    const text = choice?.message?.content;
+    const text = stripReasoning(choice?.message?.content);
     if (!text) {
       // The GPT-OSS models reason before they speak, and that reasoning is
       // billed against max_tokens. Too small a budget returns finish_reason
@@ -155,5 +180,5 @@
     return true;
   }
 
-  root.SlipstreamGroq = { chat, verifyKey, listModels, GroqError, DEFAULT_MODEL, FALLBACK_MODELS, normalizeModel };
+  root.SlipstreamGroq = { chat, verifyKey, listModels, stripReasoning, GroqError, DEFAULT_MODEL, FALLBACK_MODELS, normalizeModel };
 })(typeof self !== 'undefined' ? self : globalThis);
