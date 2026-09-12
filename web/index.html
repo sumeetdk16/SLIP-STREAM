@@ -14,8 +14,13 @@
   RISK: transit grammar needs discipline — every stroke at 0/45/90, or it reads
   as decoration instead of a map.
 -->
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Slipstream</title>
+<!-- Marks the page as scripted before first paint, so the scroll-reveal
+     effects below can default to hidden only under this class — with it
+     absent (JS off or blocked) the page renders exactly as it always has. -->
+<script>document.documentElement.classList.add('js')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
@@ -290,6 +295,9 @@
   }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
   .btn {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     font-family: var(--ui);
     font-weight: 700;
     font-size: 14px;
@@ -303,9 +311,24 @@
     display: inline-flex;
     align-items: center;
     gap: 9px;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    transition: border-color 0.15s, color 0.15s;
   }
-  .btn:hover { background: var(--raised); border-color: var(--hair-hi); }
+  /* The fill grows from wherever the cursor entered rather than swapping in
+     flat — CSS alone gives a plain centred grow; JS below only relocates the
+     origin to the entry point, so a no-JS visit still gets a working hover. */
+  .btn:not(.primary)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--raised);
+    transform: scale(0);
+    transform-origin: var(--ox, 50%) var(--oy, 50%);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .btn:not(.primary):hover::before { transform: scale(1); }
+  .btn:hover { border-color: var(--hair-hi); }
   .btn:active { transform: translateY(1px); }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
@@ -585,7 +608,11 @@
     padding: 4px 9px;
     color: var(--text);
     white-space: nowrap;
+    transition: transform 0.1s ease;
   }
+  /* A keycap is drawn to look pressable, so pressing it should feel like
+     one — the same tactile-push rule the buttons already get. */
+  kbd.k:active, .install kbd:active { transform: translateY(1.5px); }
 
   /* The one caveat that costs people ten minutes, stated where they hit it. */
   .note {
@@ -665,6 +692,7 @@
     background: var(--black);
     color: var(--text);
     white-space: nowrap;
+    transition: transform 0.1s ease;
   }
 
   footer {
@@ -685,6 +713,47 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; }
     .token { offset-distance: 62%; opacity: 1; }
+  }
+
+  /* --------------------------------------------------------- spotlight */
+  /* A cursor-tracked highlight on the flat panels, white at single-digit
+     alpha to match the glass it sits on top of — a second read on the same
+     material rather than a second effect. --mx/--my are set by JS on
+     pointermove; where they are never set the gradient just centres. */
+  .diagram, .slab, .os, .pair .box { position: relative; }
+  .diagram::after, .slab::after, .os::after, .pair .box::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.07), transparent 68%);
+  }
+  .diagram:hover::after, .slab:hover::after, .os:hover::after, .pair .box:hover::after { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .diagram::after, .slab::after, .os::after, .pair .box::after { display: none; } }
+
+  /* ------------------------------------------------------------ magnetic */
+  /* The one button that acts leans toward the cursor a few pixels — the same
+     "white is the thing that moves" rule the runner and the route already
+     make, applied to the single control it would mean the most on. */
+  .btn.primary { transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), background 0.15s, border-color 0.15s; }
+
+  /* ------------------------------------------------------------- reveal */
+  /* Gains, line rows and stops arrive as the page is scrolled to them —
+     storytelling, not decoration: each is a claim, and the claims land one
+     at a time rather than all at once. Scoped to .js so a no-script visit
+     gets the exact same layout it always had, just with nothing to reveal. */
+  .js .gain, .js .lrow, .js .stop {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .js .gain.in, .js .lrow.in, .js .stop.in { opacity: 1; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .js .gain, .js .lrow, .js .stop { opacity: 1; transform: none; transition: none; }
   }
 </style>
 
@@ -713,7 +782,7 @@
     <h1>Switch models without <span class="y">losing speed</span></h1>
     <p class="lede">
       You hit a cap on one assistant and re-explain everything to the next. Slipstream carries the
-      thread across as a brief the next one can act on, typed into its composer.
+      thread across as a brief, typed straight into the next one's composer.
     </p>
     <div class="actions">
       <a class="btn primary" href="slipstream-1.0.0.zip" download>
@@ -756,7 +825,7 @@
         <text x="24" y="172" fill="var(--claude)" font-family="Outfit, sans-serif" font-size="20" font-weight="600" letter-spacing="1.5">CLAUDE</text>
         <text x="616" y="52" text-anchor="end" fill="var(--chatgpt)" font-family="Outfit, sans-serif" font-size="20" font-weight="600" letter-spacing="1.5">CHATGPT</text>
         <text x="348" y="205" fill="var(--danger)" font-family="Outfit, sans-serif" font-size="19" font-weight="700" letter-spacing="1.5">LIMIT REACHED</text>
-        <text x="252" y="112" fill="var(--accent)" font-family="Outfit, sans-serif" font-size="18" font-weight="600" letter-spacing="1.2">12 TURNS</text>
+        <text x="252" y="112" fill="var(--accent)" font-family="Outfit, sans-serif" font-size="18" font-weight="600" letter-spacing="1.2"><tspan class="count" data-count="12">12</tspan> TURNS</text>
       </svg>
 
       <div class="legend">
@@ -774,7 +843,7 @@
           <path d="M12 3 2 20h20L12 3z" /><path d="M12 10v4M12 17h.01" />
         </svg>
         <div>
-          <h3>The line closes and you start over</h3>
+          <h3>The line closes, and you start over</h3>
           <div class="strings">
             <p>"You are out of free messages until 4:00 PM"</p>
             <p>"You've reached the current usage cap for GPT-5"</p>
@@ -812,12 +881,12 @@
     <section id="gains">
       <div class="head">
         <h2>What you get out of it</h2>
-        <p class="lead">Slipstream is a Chrome extension that reads the conversation you are already in, writes it down as a brief, and types that brief into a different assistant. That buys you six things.</p>
+        <p class="lead">Slipstream reads the conversation you're already in, writes it as a brief, and types that into a different assistant. That changes six things about how you work.</p>
       </div>
       <div class="gains">
         <div class="gain">
           <h3>A cap stops the model, not you</h3>
-          <p>When an assistant cuts you off the work usually stops with it. Slipstream captures the thread the moment the notice appears and offers the other five lines <b>right there</b>.</p>
+          <p>When an assistant cuts you off, the work stops too. Slipstream captures the thread instantly and offers the other five lines <b>right there</b>.</p>
         </div>
         <div class="gain">
           <h3>No fourth re-explanation</h3>
@@ -825,20 +894,21 @@
         </div>
         <div class="gain">
           <h3>The right model for the step</h3>
-          <p>Draft on one, reason on another, check on a third. Switching stops being expensive, so you pick the model that suits the <b>step</b> rather than the one holding your history.</p>
+          <p>Draft on one, reason on another, check on a third. You pick the model for the <b>step</b>, not the one holding your history.</p>
         </div>
         <div class="gain">
           <h3>You press send, always</h3>
-          <p>The brief is typed into the composer and left there. Read it, edit it, or throw it away — <b>nothing is sent on your behalf</b>.</p>
+          <p>The brief is typed into the composer and left there. Read it, edit it, or throw it away: <b>nothing is sent on your behalf</b>.</p>
         </div>
         <div class="gain">
           <h3>No server, no account</h3>
-          <p>Threads stay in this browser's local storage. The only request that leaves is to Groq, carrying the thread you chose to hand off. <b>There is no Slipstream backend</b>.</p>
+          <p>Threads stay in this browser's local storage. The only request that leaves goes to Groq, carrying the thread you hand off. <b>There is no Slipstream backend</b>.</p>
         </div>
         <div class="gain">
           <h3>Free, and optional at that</h3>
           <p>The Groq key is free and takes a minute. Without one the extension still captures, still spots caps, and still hands off using a <b>trimmed transcript</b>.</p>
         </div>
+      </div>
     </section>
 
     <section id="brief">
@@ -874,7 +944,7 @@
     <section id="lines">
       <div class="head">
         <h2>Six lines, six DOMs</h2>
-        <p class="lead">Every chat product marks up its turns differently, so each one gets its own adapter, its own composer strategy, and its own limit phrasings.</p>
+        <p class="lead">Every chat product marks up its turns differently, so each one gets its own adapter, its own composer strategy, and its own way of phrasing a limit.</p>
       </div>
       <div class="lines">
         <div class="lrow" style="--tint: var(--chatgpt)">
@@ -919,7 +989,7 @@
     <section id="enhancer">
       <div class="head">
         <h2>And it sharpens what you type</h2>
-        <p class="lead">Pull what is in the composer, rewrite it, and the sharper prompt goes straight back, with one undo if you preferred your own words.</p>
+        <p class="lead">Pull what's in the composer, rewrite it, send the sharper version back. One undo if you liked your own words better.</p>
       </div>
       <div class="pair">
         <div class="box">
@@ -949,7 +1019,7 @@
       <dl class="facts">
         <div class="fact">
           <dt>Stored</dt>
-          <dd>Your last <b>40 threads</b>, in this browser's local extension storage. Never synced. Exportable as JSON, deletable in one click.</dd>
+          <dd>Your last <b><span class="count" data-count="40">40</span> threads</b>, in this browser's local extension storage. Never synced. Exportable as JSON, deletable in one click.</dd>
         </div>
         <div class="fact">
           <dt>Sent</dt>
@@ -968,8 +1038,8 @@
 
     <section id="manual">
       <div class="head">
-        <h2>Install it — Windows or macOS</h2>
-        <p class="lead">The same unpacked extension runs on both. It works in any Chromium browser on either system: Chrome, Edge, Brave, Opera, Arc. There is no build step and nothing to compile.</p>
+        <h2>Install it on Windows or macOS</h2>
+        <p class="lead">The same unpacked extension runs on both, in any Chromium browser: Chrome, Edge, Brave, Opera, Arc. There's nothing to build or compile.</p>
       </div>
       <div class="manual">
         <div class="os">
@@ -979,10 +1049,10 @@
           </div>
           <span class="where">Windows 10 and 11 · Chrome, Edge, Brave</span>
           <ol>
-            <li><b>Download the ZIP</b> from the top of this page, then right-click it and choose <b>Extract All</b> — say to <code>C:\Users\you\slipstream-1.0.0</code>. Chrome cannot load an extension from inside a ZIP.</li>
-            <li>Open your browser and go to <code>chrome://extensions</code> — on Edge that address is <code>edge://extensions</code>.</li>
+            <li><b>Download the ZIP</b> from the top of this page, then right-click it and choose <b>Extract All</b>, say to <code>C:\Users\you\slipstream-1.0.0</code>. Chrome cannot load an extension from inside a ZIP.</li>
+            <li>Open your browser and go to <code>chrome://extensions</code> (on Edge that address is <code>edge://extensions</code>).</li>
             <li>Turn on <b>Developer mode</b> (top-right on Chrome, left sidebar on Edge).</li>
-            <li>Click <b>Load unpacked</b> and pick <b>the extracted folder itself</b> — the one with <code>manifest.json</code> sitting directly inside it. Do not go a level deeper.</li>
+            <li>Click <b>Load unpacked</b> and pick <b>the extracted folder itself</b>, the one with <code>manifest.json</code> sitting directly inside it. Do not go a level deeper.</li>
             <li>The settings tab opens. Paste a free key from <code>console.groq.com/keys</code> and press Verify, or skip it.</li>
             <li>Open ChatGPT, Claude, Gemini, Copilot, Grok or Perplexity. The launcher appears in the bottom-right.</li>
           </ol>
@@ -1000,10 +1070,10 @@
           </div>
           <span class="where">macOS 12+ · Chrome, Edge, Brave, Arc</span>
           <ol>
-            <li><b>Download the ZIP</b> from the top of this page and double-click it — Finder unpacks it beside the file, usually <code>~/Downloads/slipstream-1.0.0</code>.</li>
-            <li>Open <code>chrome://extensions</code> in your browser — on Brave that address is <code>brave://extensions</code>.</li>
+            <li><b>Download the ZIP</b> from the top of this page and double-click it. Finder unpacks it beside the file, usually <code>~/Downloads/slipstream-1.0.0</code>.</li>
+            <li>Open <code>chrome://extensions</code> in your browser (on Brave that address is <code>brave://extensions</code>).</li>
             <li>Turn on <b>Developer mode</b>, top right.</li>
-            <li>Click <b>Load unpacked</b> and pick <b>the unpacked folder itself</b> — the one holding <code>manifest.json</code>. In the file dialog, <code>⌘ ⇧ .</code> reveals hidden files if you need it.</li>
+            <li>Click <b>Load unpacked</b> and pick <b>the unpacked folder itself</b>, the one holding <code>manifest.json</code>. In the file dialog, <code>⌘ ⇧ .</code> reveals hidden files if you need it.</li>
             <li>Paste a free Groq key into the settings tab that opens, or skip it, then open any supported chat.</li>
             <li>Working from a clone instead? Run <code>npm install &amp;&amp; npm run verify</code> at the repo root, then load <code>extension/</code> rather than the repo folder.</li>
           </ol>
@@ -1016,7 +1086,7 @@
       </div>
 
       <div class="note">
-        <b>The ZIP is ready to load — there is nothing to build.</b> It holds the extension itself,
+        <b>The ZIP is ready to load. There is nothing to build.</b> It holds the extension itself,
         so <code>manifest.json</code> is at its top level and there is no <code>package.json</code>
         in it. Running <code>npm install</code> inside the unpacked folder fails with
         <code>ENOENT: no such file or directory … package.json</code>, and that is expected: npm
@@ -1032,7 +1102,7 @@
       <div class="stops four">
         <div class="stop">
           <h3>Keep talking</h3>
-          <p>Capture is automatic — the thread is re-saved a few seconds after each new turn. Nothing to press.</p>
+          <p>Capture is automatic. The thread is re-saved a few seconds after each new turn. Nothing to press.</p>
         </div>
         <div class="stop">
           <h3>Pick a line</h3>
@@ -1046,6 +1116,7 @@
           <h3>Sharpen anything</h3>
           <p>With a half-written prompt in the composer, press Enhance. It rewrites in place, and Undo returns your wording untouched.</p>
         </div>
+      </div>
     </section>
 
     <section id="install">
@@ -1054,8 +1125,8 @@
         <p class="lead">Unpacked, from source, on Windows or macOS. No build step, no dependencies, no account. The Groq key is optional and free.</p>
         <ol>
           <li>Download the ZIP and unpack it, or clone the repo.</li>
-          <li>Open <code>chrome://extensions</code> — or <code>edge://extensions</code> — and turn on Developer mode.</li>
-          <li>Choose <b>Load unpacked</b> — the unpacked ZIP folder itself, or <code>extension/</code> if you cloned.</li>
+          <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code>) and turn on Developer mode.</li>
+          <li>Choose <b>Load unpacked</b>: the unpacked ZIP folder itself, or <code>extension/</code> if you cloned.</li>
           <li>Paste a free key from <code>console.groq.com/keys</code> into settings, or skip it.</li>
           <li>Open any supported chat. The launcher appears in the corner.</li>
         </ol>
@@ -1161,5 +1232,99 @@
       { rootMargin: '-' + (nav.offsetHeight + 8) + 'px 0px -55% 0px', threshold: 0 }
     );
     sections.forEach(function (pair) { io.observe(pair.el); });
+  })();
+</script>
+
+<script>
+  /* Magnetic primary button: it leans a few pixels toward the cursor and
+     springs back on leave. Fine-pointer only — a touch tap has no hover to
+     lean into, and the offset would just stick. */
+  (function () {
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (reduce || !fine) return;
+    document.querySelectorAll('.btn.primary').forEach(function (btn) {
+      var raf = null, dx = 0, dy = 0;
+      btn.addEventListener('pointermove', function (e) {
+        var r = btn.getBoundingClientRect();
+        dx = Math.max(-10, Math.min(10, (e.clientX - (r.left + r.width / 2)) * 0.25));
+        dy = Math.max(-8, Math.min(8, (e.clientY - (r.top + r.height / 2)) * 0.25));
+        if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = null;
+          btn.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
+        });
+      });
+      btn.addEventListener('pointerleave', function () { btn.style.transform = ''; });
+    });
+  })();
+
+  /* Spotlight: --mx/--my track the pointer inside each flat panel so the
+     radial highlight in the CSS above follows it. Throttled to one update
+     per animation frame, the same discipline the nav's scroll flag uses. */
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll('.diagram, .slab, .os, .pair .box').forEach(function (el) {
+      var raf = null, px = '50%', py = '50%';
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect();
+        px = ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%';
+        py = ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%';
+        if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = null;
+          el.style.setProperty('--mx', px);
+          el.style.setProperty('--my', py);
+        });
+      });
+    });
+  })();
+
+  /* Scroll reveal: each gain, line row and stop gets its "in" class the
+     first time it crosses into view, staggered a little within its own
+     group so the list arrives as a sequence instead of a block. */
+  (function () {
+    var groups = [document.querySelectorAll('.gain'), document.querySelectorAll('.lrow'), document.querySelectorAll('.stop')];
+    if (!('IntersectionObserver' in window)) {
+      groups.forEach(function (g) { g.forEach(function (el) { el.classList.add('in'); }); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+    groups.forEach(function (g) {
+      g.forEach(function (el, i) {
+        el.style.transitionDelay = (Math.min(i, 5) * 60) + 'ms';
+        io.observe(el);
+      });
+    });
+  })();
+
+  /* Count-up: numbers worth landing on rather than just reading — the
+     thread length the diagram's own token is carrying, and the real
+     ceiling on what the extension keeps. Each runs once, the moment it
+     scrolls into view. */
+  (function () {
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var counters = document.querySelectorAll('.count[data-count]');
+    if (!counters.length || reduce || !('IntersectionObserver' in window)) return;
+    function run(el) {
+      var target = parseInt(el.dataset.count, 10);
+      var start = null, duration = 900;
+      requestAnimationFrame(function step(ts) {
+        if (!start) start = ts;
+        var p = Math.min(1, (ts - start) / duration);
+        el.textContent = Math.floor(p * target);
+        if (p < 1) requestAnimationFrame(step); else el.textContent = target;
+      });
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { run(e.target); io.unobserve(e.target); } });
+    }, { threshold: 0.6 });
+    counters.forEach(function (c) { io.observe(c); });
   })();
 </script>
