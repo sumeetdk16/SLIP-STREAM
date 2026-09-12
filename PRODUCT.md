@@ -7,7 +7,7 @@ inferred from the brief, not stated by the user._
 
 A Chrome extension (Manifest V3) that carries an in-progress AI conversation from one assistant to
 another. It captures the live thread from the page, compresses it into a five-part handoff brief
-(`CONTEXT / ESTABLISHED / CONSTRAINTS / STATE / NEXT`) with LLaMA 3.3 70B on Groq, opens the
+(`CONTEXT / ESTABLISHED / CONSTRAINTS / STATE / NEXT`) with GPT-OSS 120B on Groq, opens the
 destination assistant, and types the brief into its composer.
 
 Formerly named ContextBridge, then Continuum. Renamed to **Slipstream** on 2026-09-11.

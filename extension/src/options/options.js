@@ -128,7 +128,7 @@
       const release = latch($('verify'), 'Testing…');
       status(keyStatus, 'Testing…');
       try {
-        await send('VERIFY_KEY', { apiKey });
+        await send('VERIFY_KEY', { apiKey, model: $('model').value });
         await send('SET_SETTINGS', { patch: { groqApiKey: apiKey, model: $('model').value } });
         status(keyStatus, 'Connected. Key saved.', 'ok');
       } catch (err) {

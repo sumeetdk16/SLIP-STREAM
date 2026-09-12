@@ -25,7 +25,7 @@
     <section>
       <h2>Groq API</h2>
       <p class="sub">
-        Groq's free tier (LLaMA 3.3 70B) compresses a thread into a handoff brief and rewrites prompts.
+        Groq's free tier (GPT-OSS 120B) compresses a thread into a handoff brief and rewrites prompts.
         The key is stored in this browser and sent only to <code>api.groq.com</code>. Everything else
         works without it.
       </p>
@@ -40,10 +40,10 @@
         <div class="field">
           <label for="model">Model</label>
           <select id="model">
-            <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B, versatile (recommended)</option>
-            <option value="llama-3.1-8b-instant">LLaMA 3.1 8B, instant (fastest)</option>
-            <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
-            <option value="qwen/qwen3-32b">Qwen 3 32B</option>
+            <option value="openai/gpt-oss-120b">GPT-OSS 120B (recommended)</option>
+            <option value="openai/gpt-oss-20b">GPT-OSS 20B (fastest)</option>
+            <option value="qwen/qwen3.8-27b">Qwen 3.8 27B</option>
+            <option value="groq/compound-mini">Compound Mini</option>
           </select>
         </div>
         <div class="row" style="margin-top: 12px">

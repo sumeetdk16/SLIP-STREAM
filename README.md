@@ -25,7 +25,7 @@ three or four messages.
 
 - **Captures** the live thread from the page — real message nodes, roles intact — and keeps it
   saved as it grows.
-- **Compresses** it with LLaMA 3.3 70B on Groq into a five-section handoff brief
+- **Compresses** it with GPT-OSS 120B on Groq into a five-section handoff brief
   (`CONTEXT / ESTABLISHED / CONSTRAINTS / STATE / NEXT`), in well under a second on the free tier.
 - **Carries** it over: pick a line, and Slipstream opens that assistant, finds its composer and
   types the brief in. You read it and press send.

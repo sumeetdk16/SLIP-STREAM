@@ -10,7 +10,21 @@
   'use strict';
 
   const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
-  const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+  const DEFAULT_MODEL = 'openai/gpt-oss-120b';
+
+  // Groq retires models without warning, and a stale id comes back as a 404
+  // that reads like a broken key. Anything not on this list is rewritten to the
+  // default on read, so an old saved setting heals itself.
+  const MODELS = [
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+    'groq/compound-mini'
+  ];
+
+  function normalizeModel(model) {
+    return MODELS.includes(model) ? model : DEFAULT_MODEL;
+  }
   const TIMEOUT_MS = 25000;
 
   class GroqError extends Error {
@@ -37,7 +51,7 @@
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: model || DEFAULT_MODEL,
+          model: normalizeModel(model),
           temperature,
           max_tokens: maxTokens,
           messages: [
@@ -66,9 +80,10 @@
     return text.trim();
   }
 
-  async function verifyKey(apiKey) {
+  async function verifyKey(apiKey, model) {
     await chat({
       apiKey,
+      model,
       system: 'Reply with the single word OK.',
       user: 'ping',
       maxTokens: 5,
@@ -77,5 +92,5 @@
     return true;
   }
 
-  root.SlipstreamGroq = { chat, verifyKey, GroqError, DEFAULT_MODEL };
+  root.SlipstreamGroq = { chat, verifyKey, GroqError, DEFAULT_MODEL, MODELS, normalizeModel };
 })(typeof self !== 'undefined' ? self : globalThis);

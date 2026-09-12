@@ -801,7 +801,7 @@
         h('div', { class: 'row', style: 'margin-top:9px' }, [undoBtn, pullBtn, runBtn]),
         h('div', {
           class: 'hint',
-          html: 'Rewritten by LLaMA 3.3 70B on Groq. <kbd>⌘⇧K</kbd> hides this panel.'
+          html: 'Rewritten by GPT-OSS 120B on Groq. <kbd>⌘⇧K</kbd> hides this panel.'
         })
       ]);
       return enhancerNode;

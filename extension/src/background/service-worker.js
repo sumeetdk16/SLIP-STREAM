@@ -337,9 +337,9 @@ const handlers = {
     return { ok: true };
   },
 
-  async VERIFY_KEY({ apiKey }, sender) {
+  async VERIFY_KEY({ apiKey, model }, sender) {
     if (!isPrivilegedSender(sender)) throw new Error('Key verification is not available from a page.');
-    await SlipstreamGroq.verifyKey(apiKey);
+    await SlipstreamGroq.verifyKey(apiKey, model);
     return { ok: true };
   },
 

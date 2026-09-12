@@ -19,7 +19,7 @@ test('the options page can read its own settings even though it runs in a tab', 
   const { send } = loadServiceWorker();
   const res = await send('GET_SETTINGS', {}, optionsSender);
   assert.equal(res.ok, true);
-  assert.equal(res.data.model, 'llama-3.3-70b-versatile');
+  assert.equal(res.data.model, 'openai/gpt-oss-120b');
 });
 
 test('saving an API key from the options page writes it to storage', async () => {
