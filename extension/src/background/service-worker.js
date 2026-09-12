@@ -96,7 +96,7 @@ async function getSettings() {
   const merged = { ...DEFAULT_SETTINGS, ...(settings || {}) };
   // A model id saved before Groq retired it would otherwise 404 every request
   // and leave the options dropdown blank. Heal it on the way out.
-  merged.model = SlipstreamGroq.normalizeModel(merged.model);
+  merged.model = SlipstreamGroq.normalizeModel(merged.model);  // fills an empty setting only
   return merged;
 }
 
@@ -339,6 +339,12 @@ const handlers = {
   async OPEN_OPTIONS() {
     await chrome.runtime.openOptionsPage();
     return { ok: true };
+  },
+
+  async LIST_MODELS({ apiKey }, sender) {
+    if (!isPrivilegedSender(sender)) throw new Error('Model listing is not available from a page.');
+    const key = apiKey || (await getSettings()).groqApiKey;
+    return { models: await SlipstreamGroq.listModels(key) };
   },
 
   async VERIFY_KEY({ apiKey, model }, sender) {

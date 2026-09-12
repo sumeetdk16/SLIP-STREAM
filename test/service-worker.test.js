@@ -67,12 +67,72 @@ test('another extension gets nothing', async () => {
   assert.match(res.error, /Untrusted/);
 });
 
-test('a model id Groq has retired is healed on read instead of 404-ing forever', async () => {
+test('a model retired since it was saved retries on the default instead of 404-ing', async () => {
   const { send } = loadServiceWorker({
     storage: { settings: { model: 'llama-3.3-70b-versatile', groqApiKey: 'gsk_live' } }
   });
-  const res = await send('GET_SETTINGS', {}, optionsSender);
-  assert.equal(res.data.model, 'openai/gpt-oss-120b');
+  const tried = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const model = JSON.parse(init.body).model;
+    tried.push(model);
+    if (model === 'llama-3.3-70b-versatile') {
+      return {
+        ok: false,
+        status: 404,
+        async text() {
+          return '{"error":{"code":"model_not_found"}}';
+        }
+      };
+    }
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { choices: [{ message: { content: 'OK' }, finish_reason: 'stop' }] };
+      }
+    };
+  };
+  try {
+    const res = await send('VERIFY_KEY', { apiKey: 'gsk_live', model: 'llama-3.3-70b-versatile' }, optionsSender);
+    assert.equal(res.ok, true);
+    assert.deepEqual(tried, ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b']);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test('the model list is built from Groq, with speech and classifier models filtered out', async () => {
+  const { send } = loadServiceWorker({ storage: { settings: { groqApiKey: 'gsk_live' } } });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    async json() {
+      return {
+        data: [
+          { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B', active: true, input_modalities: ['text'], output_modalities: ['text'], context_length: 131072 },
+          { id: 'qwen/qwen3.8-27b', name: 'Qwen 3.8', active: true, input_modalities: ['text', 'image'], output_modalities: ['text'], context_length: 131072 },
+          { id: 'whisper-large-v3', name: 'Whisper', active: true, input_modalities: ['audio'], output_modalities: ['transcription'], context_length: 131072 },
+          { id: 'canopylabs/orpheus-v1-english', name: 'Orpheus', active: true, input_modalities: ['text'], output_modalities: ['speech'], context_length: 131072 },
+          { id: 'meta-llama/llama-prompt-guard-2-86m', name: 'Guard', active: true, input_modalities: ['text'], output_modalities: ['text'], context_length: 131072 },
+          { id: 'retired-model', name: 'Retired', active: false, input_modalities: ['text'], output_modalities: ['text'], context_length: 131072 }
+        ]
+      };
+    }
+  });
+  try {
+    const res = await send('LIST_MODELS', {}, optionsSender);
+    assert.deepEqual(res.data.models.map((m) => m.id), ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b']);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test('a page cannot ask the worker to enumerate models', async () => {
+  const { send } = loadServiceWorker({ storage: { settings: { groqApiKey: 'gsk_live' } } });
+  const res = await send('LIST_MODELS', {}, pageSender);
+  assert.equal(res.ok, false);
 });
 
 test('Test connection tests the model the dropdown is showing, not the default', async () => {

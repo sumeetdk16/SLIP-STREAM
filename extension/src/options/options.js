@@ -112,6 +112,36 @@
       }
     });
 
+    /**
+     * Replaces the seed <option>s with what this key can actually reach. A
+     * hardcoded list is what broke before: Groq retired three of four ids and
+     * every one of them 404-ed as if the key were bad.
+     */
+    async function loadModels(apiKey) {
+      const select = $('model');
+      let models;
+      try {
+        ({ models } = await send('LIST_MODELS', { apiKey }));
+      } catch (err) {
+        return; // keep the seed options; the key test will report the real reason
+      }
+      const wanted = select.value;
+      select.textContent = '';
+      for (const m of models) {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        select.appendChild(opt);
+      }
+      select.value = wanted;
+      if (select.selectedIndex < 0) {
+        // The saved model is gone from Groq's catalogue. Pick the first live
+        // one and persist it, rather than leaving the control blank.
+        select.selectedIndex = 0;
+        send('SET_SETTINGS', { patch: { model: select.value } }).catch(() => {});
+      }
+    }
+
     $('model').addEventListener('change', () => {
       send('SET_SETTINGS', { patch: { model: $('model').value } }).catch(() => {});
     });
@@ -130,6 +160,7 @@
       try {
         await send('VERIFY_KEY', { apiKey, model: $('model').value });
         await send('SET_SETTINGS', { patch: { groqApiKey: apiKey, model: $('model').value } });
+        await loadModels(apiKey);
         status(keyStatus, 'Connected. Key saved.', 'ok');
       } catch (err) {
         status(keyStatus, err.message, 'err');
@@ -167,6 +198,7 @@
       const settings = await send('GET_SETTINGS');
       $('apiKey').value = settings.groqApiKey || '';
       $('model').value = settings.model;
+      if (settings.hasGroqKey || settings.groqApiKey) await loadModels();
       ['widgetEnabled', 'autoCapture', 'limitAlerts', 'autoFillTarget'].forEach((id) =>
         bindToggle(id, settings)
       );
