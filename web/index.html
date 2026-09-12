@@ -27,6 +27,8 @@
   :root {
     /* Pitch black ground, and a grey scale where every step is a level of
        structure rather than a decoration. No hue in the chrome at all. */
+    --nav-h: 60px;
+
     --black: #000000;
     --surface: #0b0b0b;
     --raised: #161616;
@@ -93,7 +95,16 @@
 
   * { box-sizing: border-box; }
 
-  html { background: var(--black); color: var(--text); }
+  html {
+    background: var(--black);
+    color: var(--text);
+    /* Every nav link is an in-page anchor, and the bar stands over the top of
+       the document, so a section asked for by name has to stop below it
+       rather than behind it. */
+    scroll-padding-top: calc(var(--nav-h) + 16px);
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
   body {
     margin: 0;
@@ -131,9 +142,22 @@
   .nav {
     position: sticky;
     top: 0;
-    z-index: 20;
-    border-bottom: 1px solid var(--hair);
+    z-index: 50;
+    /* The bar carries its own ground. The glass is layered over this by
+       script; if the script never arrives, the bar is still a bar. */
+    background: rgba(0, 0, 0, 0.86);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
+  /* Flush with the page at the top; it only separates itself from the
+     document once there is document underneath it to separate from. */
+  .nav.scrolled {
+    border-bottom-color: var(--hair);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  }
+  @media (prefers-reduced-motion: reduce) { .nav { transition: none; } }
   /* ------------------------------------------------------------- glass */
   /* liquid-glass.js owns the refraction (backdrop-filter: url(#…), set
      inline). Everything that makes it read as a material — the tint it is
@@ -155,8 +179,12 @@
      leans on a denser ground so the type keeps its contrast. */
   .glass.lg-fallback { background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)), rgba(11, 11, 11, 0.72); }
 
-  .nav.glass { background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)), rgba(0, 0, 0, 0.42); box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06); }
+  /* .glass sets position: relative and is declared after .nav, so without
+     this the bar quietly stopped being sticky the moment the script dressed
+     it — the same specificity, the later rule, position lost. */
+  .nav.glass { position: sticky; top: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)), rgba(0, 0, 0, 0.42); box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06); }
   .nav.glass.lg-fallback { background: rgba(0, 0, 0, 0.78); }
+  .nav.glass.scrolled { box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px rgba(0, 0, 0, 0.5); }
 
   /* The panels that become glass give up their opaque fills to it. */
   .diagram.glass, .os.glass { border: 0; }
@@ -170,7 +198,7 @@
     .nav.glass { background: rgba(0, 0, 0, 0.94); }
   }
 
-  .nav-inner { display: flex; align-items: center; gap: 16px; height: 60px; }
+  .nav-inner { display: flex; align-items: center; gap: 16px; height: var(--nav-h); }
   .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .brand svg { width: 24px; height: 24px; display: block; }
   .brand span {
@@ -182,7 +210,22 @@
   }
   .nav-links { margin-left: auto; display: flex; align-items: center; gap: 24px; }
   .nav-links a { font-size: 13.5px; font-weight: 500; color: var(--dim); text-decoration: none; }
+  .nav-links a { transition: color 0.15s ease; }
   .nav-links a:hover { color: var(--text); }
+  /* Which station you are at. White is the only thing that marks it, the way
+     white marks everything else on this page that is current. */
+  .nav-links a[aria-current="true"] { color: var(--text); }
+  /* Absolutely placed so marking a link current cannot move the row. */
+  .nav-links a { position: relative; }
+  .nav-links a[aria-current="true"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -7px;
+    height: 2px;
+    background: var(--accent);
+  }
   @media (max-width: 680px) { .nav-links a.sm-hide { display: none; } }
 
   /* --------------------------------------------------------------- hero */
@@ -1062,5 +1105,61 @@
       // assistant's own mark, and the chrome does not get to boost it.
       liquidGlass(el, { scale: -108, chroma: 5, blur: 6, saturate: 1, fallbackBlur: 14 });
     });
+  })();
+</script>
+
+<script>
+  /* The sticky bar's two states. Both are read off the browser's own
+     scheduling — a rAF-latched scroll flag and an IntersectionObserver — so
+     neither one does layout work on the scroll thread. */
+  (function () {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+
+    var ticking = false;
+    function apply() {
+      ticking = false;
+      nav.classList.toggle('scrolled', window.scrollY > 8);
+    }
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(apply);
+    }, { passive: true });
+    apply();
+
+    var links = [].slice.call(document.querySelectorAll('.nav-links a[href^="#"]'));
+    var sections = links
+      .map(function (a) {
+        return { link: a, el: document.querySelector(a.getAttribute('href')) };
+      })
+      .filter(function (pair) { return pair.el; });
+    if (!sections.length || !('IntersectionObserver' in window)) return;
+
+    function mark(current) {
+      sections.forEach(function (pair) {
+        if (pair.el === current) pair.link.setAttribute('aria-current', 'true');
+        else pair.link.removeAttribute('aria-current');
+      });
+    }
+
+    var visible = [];
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          var i = visible.indexOf(entry.target);
+          if (entry.isIntersecting && i < 0) visible.push(entry.target);
+          if (!entry.isIntersecting && i >= 0) visible.splice(i, 1);
+        });
+        // Topmost section in the band wins, so the mark moves once per
+        // section rather than flickering where two of them overlap.
+        visible.sort(function (a, b) { return a.offsetTop - b.offsetTop; });
+        mark(visible[0] || null);
+      },
+      // A band just under the bar: a section counts as "where you are" from
+      // the moment its top clears the nav until it has fully left.
+      { rootMargin: '-' + (nav.offsetHeight + 8) + 'px 0px -55% 0px', threshold: 0 }
+    );
+    sections.forEach(function (pair) { io.observe(pair.el); });
   })();
 </script>
