@@ -683,6 +683,14 @@
   .install .btn.primary:hover { background: #1f1f1f; border-color: #1f1f1f; }
   .install .keys { margin-top: 34px; padding-top: 22px; border-top: 3px solid #d9d9d9; display: grid; gap: 10px; }
   .install .krow { display: flex; align-items: center; justify-content: space-between; gap: 18px; font-size: 14.5px; font-weight: 500; color: #1a1a1a; }
+  /* The shortcuts-page path is long enough to squeeze the label into a
+     ragged multi-line column next to it at phone widths, so below 560px
+     each row becomes label, then value, instead of two columns fighting
+     for the same line. */
+  @media (max-width: 560px) {
+    .krow2, .install .krow { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .krow2 kbd, .install .krow kbd { white-space: normal; word-break: break-all; }
+  }
   .install kbd {
     font-family: var(--mono);
     font-size: 12px;
