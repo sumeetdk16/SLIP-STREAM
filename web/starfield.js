@@ -175,7 +175,10 @@
      an inline call, which extension pages' CSP would refuse. */
   var tag = document.currentScript;
   if (tag && tag.hasAttribute("data-mount")) {
-    if (document.body) starfield(document.body);
-    else document.addEventListener("DOMContentLoaded", function () { starfield(document.body); });
+    /* Half the stars on phone-sized screens: the same density on a smaller
+       canvas, and half the strokes per frame on a weaker GPU. */
+    var mount = function () { starfield(document.body, { quantity: global.innerWidth < 700 ? 256 : 512 }); };
+    if (document.body) mount();
+    else document.addEventListener("DOMContentLoaded", mount);
   }
 })(typeof window !== "undefined" ? window : this);

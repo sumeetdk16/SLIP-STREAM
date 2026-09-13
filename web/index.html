@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
   rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
 />
 
 <style>
@@ -779,6 +779,34 @@
   .diagram:hover, .os:hover, .slab:hover, .pair .box:hover, .note:hover { border-color: #5a5a5a; }
   .pair .box.after, .pair .box.after.glass { border-color: #6a6a6a; }
   .slab .cap { border-bottom: 1px solid #2a2a2a; }
+
+  /* ---------------------------------------------- touch + small screens */
+  /* Every link a thumb can hit gets a 44px target without moving the type. */
+  .nav-links a, footer a { display: inline-flex; align-items: center; min-height: 44px; }
+  .nav-links a[aria-current="true"]::after { bottom: 6px; }
+  .nav-links { gap: clamp(14px, 2.4vw, 24px); }
+  html { -webkit-text-size-adjust: 100%; }
+  a, button, .btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .os code, .use code, .install code { overflow-wrap: anywhere; }
+  .os kbd, .os li kbd { white-space: nowrap; }
+  /* Tablet: the hero stacks, so give the diagram the full row and keep the
+     copy from running wider than a comfortable line. */
+  @media (min-width: 681px) and (max-width: 960px) {
+    .hero .lede { font-size: 20px; }
+    .diagram { padding: 30px 30px 24px; }
+  }
+  /* Phone: buttons become full-width thumb targets and stack evenly. */
+  @media (max-width: 560px) {
+    .hero .actions { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .hero .btn { justify-content: center; width: 100%; font-size: 16px; padding: 16px 20px; }
+    .hero .meta { font-size: 11.5px; line-height: 1.7; }
+    h1 { font-size: clamp(40px, 12vw, 56px); }
+    .diagram { padding: 18px 14px 16px; }
+    section { padding-top: 56px; padding-bottom: 56px; }
+    .wrap { padding-inline: 18px; }
+  }
+  /* Offscreen sections skip layout and paint until they approach the view. */
+  main > section { content-visibility: auto; contain-intrinsic-size: auto 900px; }
   /* The homepage diagram gets more room: it reaches past the column edge
      on wide screens and breathes inside. */
   @media (min-width: 961px) {
@@ -1254,6 +1282,9 @@
      the page is the solid instrument panel it has always been. */
   (function () {
     if (typeof liquidGlass !== 'function') return;
+    // SVG refraction repaints on every scroll frame; phones and tablets get
+    // the solid panels instead, which read the same and scroll smoothly.
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || window.innerWidth < 961) return;
 
     var nav = document.querySelector('.nav');
     if (nav) {
