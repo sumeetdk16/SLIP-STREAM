@@ -119,8 +119,9 @@
        flat black page there is nothing to bend. */
     background:
       repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.032) 0 1px, transparent 1px 46px) fixed,
-      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 46px) fixed,
-      var(--black);
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 46px) fixed;
+    /* No fill of its own: html carries the black, and the starfield canvas
+       (z-index -1) sits between the two. */
     color: var(--text);
     font-family: var(--ui);
     font-size: var(--t-body);
@@ -763,6 +764,43 @@
   @media (prefers-reduced-motion: reduce) {
     .js .gain, .js .lrow, .js .stop { opacity: 1; transform: none; transition: none; }
   }
+  /* ------------------------------------------------------- bold boxes */
+  /* Every panel reads as a machined slab: a heavy lit rim, a bright top
+     edge where the light hits, and a hard offset shadow that sets it off
+     the starfield. Still monochrome — weight, not hue. */
+  .diagram, .diagram.glass, .os, .os.glass, .slab, .slab.glass,
+  .pair .box, .pair .box.glass, .note {
+    border: 2px solid #3a3a3a;
+    border-top-color: #8a8a8a;
+    border-radius: var(--r-band);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+      8px 8px 0 #161616,
+      8px 8px 0 2px #262626,
+      0 30px 70px rgba(0, 0, 0, 0.8);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s;
+  }
+  .diagram:hover, .os:hover, .slab:hover, .pair .box:hover, .note:hover {
+    transform: translate(-3px, -3px);
+    border-color: #555;
+    border-top-color: #d0d0d0;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      11px 11px 0 #1a1a1a,
+      11px 11px 0 2px #333,
+      0 36px 80px rgba(0, 0, 0, 0.85);
+  }
+  .pair .box, .pair .box.glass { border-radius: var(--r-lg); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 5px 5px 0 #161616, 5px 5px 0 2px #262626; }
+  .pair .box.after, .pair .box.after.glass { border-color: #6a6a6a; border-top-color: #e6e6e6; }
+  .slab .cap { border-bottom: 2px solid #2e2e2e; }
+  @media (max-width: 720px) {
+    .diagram, .os, .slab, .note { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 5px 5px 0 #161616, 5px 5px 0 2px #262626; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .diagram:hover, .os:hover, .slab:hover, .pair .box:hover, .note:hover { transform: none; }
+  }
 </style>
 
 <header class="nav">
@@ -1162,6 +1200,38 @@
 </main>
 
 <script src="liquid-glass.js"></script>
+<script src="starfield.js" data-mount></script>
+<script src="glow-cursor.js"></script>
+<script>
+  /* A pointer trail across the whole page. Fine pointers only, and never
+     under reduced motion. White, to match the starfield's streaks. */
+  (function () {
+    if (typeof glowCursor !== 'function') return;
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    glowCursor(document.body, {
+      color: '#ffffff',
+      secondaryColor: '#ffffff',
+      trailLength: 32,
+      trailWidth: 2,
+      trailTaper: 0.8,
+      followSpeed: 0.16,
+      glowIntensity: 1.9,
+      glowSpread: 0.7,
+      hotspot: 0.65,
+      brightness: 1.25,
+      opacity: 1,
+      pulseSpeed: 1.1,
+      noiseStrength: 0.035,
+      idleFade: true,
+      idleTimeout: 700,
+      fadeDuration: 900,
+      maxDevicePixelRatio: 1.5,
+      enabled: true,
+      blendMode: 'normal'
+    });
+  })();
+</script>
 <script>
   /* The glass is progressive: the class that thins these panels out is only
      added once the module is here to put something behind them. Without JS
