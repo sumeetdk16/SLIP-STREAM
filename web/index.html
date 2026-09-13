@@ -881,13 +881,6 @@
     </div>
   </div>
 
-  <div class="reveal3d" aria-label="Works with ChatGPT, Claude, Gemini, Copilot, Grok and Perplexity">
-    <div class="reveal3d-stage">
-      <div class="reveal3d-drum" data-items="ChatGPT,Claude,Gemini,Copilot,Grok,Perplexity"></div>
-      <p class="reveal3d-cap"><mark class="bh">One thread, every assistant</mark></p>
-    </div>
-  </div>
-
   <div class="wrap">
     <section id="why">
       <div class="closure">
@@ -1206,71 +1199,6 @@
 </main>
 
 <script src="liquid-glass.js"></script>
-<script>
-  /* 3D text reveal: words sit on the face of a cylinder (rotateX + translateZ)
-     and the drum turns from -80deg to 270deg over the section's scroll.
-     The angle eases toward its target each frame, standing in for GSAP scrub. */
-  (function () {
-    var root = document.querySelector('.reveal3d');
-    if (!root) return;
-    var drum = root.querySelector('.reveal3d-drum');
-    var names = drum.dataset.items.split(',');
-    var GAP = 15, START = -80, END = 270, RADIUS = 0.4, SMOOTH = 0.1;
-    var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    /* Repeat the names until they ring the whole cylinder, so the drum never
-       turns an empty side to the reader. */
-    var count = still ? names.length : Math.round(360 / GAP);
-    var spans = [];
-    for (var i = 0; i < count; i++) {
-      var el = document.createElement('span');
-      el.textContent = names[i % names.length];
-      el.setAttribute('aria-hidden', 'true');
-      drum.appendChild(el);
-      spans.push(el);
-    }
-    if (still) return;
-
-    var current = START, target = START, radius = 0, raf = 0;
-
-    function measure() { radius = window.innerHeight * RADIUS * 1.6; }
-
-    function progress() {
-      var r = root.getBoundingClientRect();
-      var span = r.height - window.innerHeight;
-      return Math.min(1, Math.max(0, -r.top / (span || 1)));
-    }
-
-    function paint() {
-      drum.style.transform = 'translateZ(' + -radius + 'px) rotateX(' + current + 'deg)';
-      for (var i = 0; i < spans.length; i++) {
-        var a = i * -GAP;
-        /* Facing angle relative to the reader, folded into -180..180. */
-        var rel = ((a + current) % 360 + 540) % 360 - 180;
-        var o = Math.max(0, Math.cos(rel * Math.PI / 180));
-        spans[i].style.transform = 'translateY(-50%) rotateX(' + a + 'deg) translateZ(' + radius + 'px)';
-        spans[i].style.opacity = (o * o).toFixed(3);
-      }
-    }
-
-    function tick() {
-      current += (target - current) * SMOOTH;
-      paint();
-      raf = Math.abs(target - current) > 0.05 ? requestAnimationFrame(tick) : 0;
-    }
-
-    function onScroll() {
-      target = START + (END - START) * progress();
-      if (!raf) raf = requestAnimationFrame(tick);
-    }
-
-    measure();
-    current = target = START + (END - START) * progress();
-    paint();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', function () { measure(); onScroll(); paint(); });
-  })();
-</script>
 <script src="starfield.js" data-mount></script>
 <script>
 /* Blur highlight: paragraph unblurs, then marks sweep in left to right. Re-animates on re-entry. */
