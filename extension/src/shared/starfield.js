@@ -57,7 +57,9 @@
       cy = Math.round(h / 2);
       z = (w + h) / 2;
       colorRatio = 1 / z;
-      if (!cursor.x || !cursor.y) { cursor.x = cx; cursor.y = cy; }
+      /* Without mouse steering the cursor must track the centre on every
+         measure, or a stale first centre drags the stars sideways. */
+      if (!o.mouseAdjust || !cursor.x || !cursor.y) { cursor.x = cx; cursor.y = cy; }
     }
 
     function bigBang() {

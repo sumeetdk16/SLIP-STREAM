@@ -57,7 +57,12 @@
       cy = Math.round(h / 2);
       z = (w + h) / 2;
       colorRatio = 1 / z;
-      if (!cursor.x || !cursor.y) { cursor.x = cx; cursor.y = cy; }
+      /* Without mouse steering the field drifts toward the cursor's offset
+         from centre, so the cursor has to follow the centre on every
+         measure. Phones report a ~980px layout width before the viewport
+         meta applies; a cursor latched to that first centre sat hundreds of
+         px off and dragged every star sideways into long streaks. */
+      if (!o.mouseAdjust || !cursor.x || !cursor.y) { cursor.x = cx; cursor.y = cy; }
     }
 
     function bigBang() {
