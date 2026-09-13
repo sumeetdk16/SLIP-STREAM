@@ -249,7 +249,7 @@
     gap: clamp(32px, 5vh, 56px) clamp(40px, 5vw, 72px);
   }
   h1 {
-    font-size: clamp(44px, 5.6vw, 82px);
+    font-size: clamp(40px, min(5.6vw, 9.5vh), 88px);
     line-height: 0.92;
     text-transform: uppercase;
     max-width: 13ch;
@@ -258,14 +258,15 @@
   h1 .y { color: var(--accent); }
   .hero .lede {
     margin-top: clamp(20px, 2.4vh, 30px);
-    font-size: clamp(17px, 1.35vw, 21px);
+    font-size: clamp(16px, min(1.4vw, 2.4vh), 22px);
     line-height: 1.55;
     color: var(--dim);
-    max-width: 42ch;
+    max-width: 44ch;
   }
   .hero .actions { margin-top: clamp(24px, 3vh, 38px); }
-  .hero .btn { font-size: 15px; padding: 15px 24px; }
-  .hero .btn svg { width: 16px; height: 16px; }
+  .hero .btn { font-size: 16px; padding: clamp(12px, 1.8vh, 17px) 26px; }
+  .hero .btn svg { width: 18px; height: 18px; }
+  .hero .meta { font-size: 12.5px; margin-top: 20px; }
   /* The download's own facts, directly under it, in the data face. */
   .meta {
     margin-top: 16px;
@@ -285,14 +286,14 @@
       padding-top: 56px;
       padding-bottom: 56px;
     }
-    h1 { font-size: clamp(40px, 8.6vw, 68px); max-width: 16ch; }
+    h1 { font-size: clamp(44px, 9.4vw, 76px); max-width: 16ch; }
     .hero .lede { max-width: 54ch; }
   }
   /* A short laptop window: keep the whole hero on screen rather than
      letting the type push the buttons under the fold. */
   @media (min-width: 961px) and (max-height: 760px) {
-    h1 { font-size: clamp(40px, 4.6vw, 60px); }
-    .hero .lede { font-size: 17px; }
+    h1 { font-size: clamp(44px, 5vw, 68px); }
+    .hero .lede { font-size: 18px; }
   }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
   .btn {
@@ -782,6 +783,23 @@
   @media (min-width: 961px) {
     .hero .diagram { margin-right: calc(-1 * clamp(0px, calc((100vw - 1180px) / 2 - 8px), 72px)); padding: clamp(32px, 3.4vw, 48px) clamp(32px, 3.6vw, 52px) clamp(28px, 3vw, 40px); }
   }
+
+  /* ------------------------------------------------- blur highlight */
+  mark.bh { background: none; color: inherit; border-radius: 4px; padding: 0 .16em; margin: 0 -.04em;
+    background-image: linear-gradient(var(--bh, #0090ec), var(--bh, #0090ec)); background-repeat: no-repeat; background-size: 0% 100%;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .bh-scope { transition: filter .8s ease, opacity .8s ease; }
+  .js .bh-scope:not(.bh-in) { filter: blur(8px); opacity: .3; }
+  .bh-scope.bh-in mark.bh { background-size: 100% 100%; color: #fff;
+    transition: background-size 1s cubic-bezier(.65,0,.35,1) calc(.4s + var(--i,0) * .15s), color .3s calc(.4s + var(--i,0) * .15s); }
+  @media (prefers-reduced-motion: reduce) {
+    .js .bh-scope:not(.bh-in) { filter: none; opacity: 1; }
+    .bh-scope mark.bh, .bh-scope.bh-in mark.bh { transition: none; background-size: 100% 100%; color: #fff; }
+  }
+
+  /* Box titles carry the highlight blue. */
+  .slab .cap, .pair .box b, .os .osname h3, .fact dt { color: #0090ec; }
+  .os .osname svg { color: #0090ec; }
 </style>
 
 <header class="nav">
@@ -789,7 +807,7 @@
     <a class="brand" href="#top" aria-label="Slipstream">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M2 17h20" stroke="#3a3a3a" stroke-width="2.4" stroke-linecap="butt" />
-        <path d="M2 17h4.6l7-10H22" stroke="#ffffff" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter" />
+        <path d="M2 17h4.6l7-10H22" stroke="#0090ec" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter" />
       </svg>
       <span>Slipstream</span>
     </a>
@@ -866,7 +884,7 @@
   <div class="reveal3d" aria-label="Works with ChatGPT, Claude, Gemini, Copilot, Grok and Perplexity">
     <div class="reveal3d-stage">
       <div class="reveal3d-drum" data-items="ChatGPT,Claude,Gemini,Copilot,Grok,Perplexity"></div>
-      <p class="reveal3d-cap">One thread, every assistant</p>
+      <p class="reveal3d-cap"><mark class="bh">One thread, every assistant</mark></p>
     </div>
   </div>
 
@@ -893,20 +911,20 @@
 
     <section id="how">
       <div class="head">
-        <h2>Three stops, one click</h2>
+        <h2><mark class="bh">Three stops, one click</mark></h2>
         <p class="lead">The launcher sits in the corner of every supported chat and keeps the open thread ready to move.</p>
       </div>
       <div class="stops">
         <div class="stop">
-          <h3>Reads the live thread</h3>
+          <h3><mark class="bh">Reads the live thread</mark></h3>
           <p>A per-platform adapter walks the real message nodes, roles intact and copy buttons stripped, then re-saves the thread as it grows.</p>
         </div>
         <div class="stop">
-          <h3>Writes the brief</h3>
+          <h3><mark class="bh">Writes the brief</mark></h3>
           <p>GPT-OSS 120B on Groq compresses the transcript into five labelled parts in well under a second. No key? You still get a trimmed transcript.</p>
         </div>
         <div class="stop">
-          <h3>Types it into the next one</h3>
+          <h3><mark class="bh">Types it into the next one</mark></h3>
           <p>Pick a line. Slipstream opens that assistant, finds its composer and fills the brief in. You read it, then press send.</p>
         </div>
       </div>
@@ -914,7 +932,7 @@
 
     <section id="gains">
       <div class="head">
-        <h2>What you get out of it</h2>
+        <h2><mark class="bh">What you get out of it</mark></h2>
         <p class="lead">Slipstream reads the conversation you're already in, writes it as a brief, and types that into a different assistant. That changes six things about how you work.</p>
       </div>
       <div class="gains">
@@ -947,8 +965,8 @@
 
     <section id="brief">
       <div class="head">
-        <h2>What actually gets carried</h2>
-        <p class="lead">Not the transcript. A brief built for the assistant receiving it, and the decisions it must not re-litigate.</p>
+        <h2><mark class="bh">What actually gets carried</mark></h2>
+        <p class="lead"><mark class="bh">Not the transcript.</mark> A brief built for the assistant receiving it, and the decisions it <mark class="bh">must not re-litigate</mark>.</p>
       </div>
       <div class="proof">
         <div class="slab">
@@ -977,8 +995,8 @@
 
     <section id="lines">
       <div class="head">
-        <h2>Six lines, six DOMs</h2>
-        <p class="lead">Every chat product marks up its turns differently, so each one gets its own adapter, its own composer strategy, and its own way of phrasing a limit.</p>
+        <h2><mark class="bh">Six lines, six DOMs</mark></h2>
+        <p class="lead">Every chat product marks up its turns differently, so each one gets <mark class="bh">its own adapter</mark>, its own composer strategy, and its own way of phrasing a limit.</p>
       </div>
       <div class="lines">
         <div class="lrow" style="--tint: var(--chatgpt)">
@@ -1022,7 +1040,7 @@
 
     <section id="enhancer">
       <div class="head">
-        <h2>And it sharpens what you type</h2>
+        <h2><mark class="bh">And it sharpens what you type</mark></h2>
         <p class="lead">Pull what's in the composer, rewrite it, send the sharper version back. One undo if you liked your own words better.</p>
       </div>
       <div class="pair">
@@ -1047,7 +1065,7 @@
 
     <section id="privacy">
       <div class="head">
-        <h2>What leaves your browser</h2>
+        <h2><mark class="bh">What leaves your browser</mark></h2>
         <p class="lead">One endpoint, one purpose, and only when you ask for it.</p>
       </div>
       <dl class="facts">
@@ -1061,7 +1079,7 @@
         </div>
         <div class="fact">
           <dt>Never sent</dt>
-          <dd>Anything to a Slipstream server, because there <b>isn't one</b>. No analytics, no accounts, no telemetry.</dd>
+          <dd>Anything to a Slipstream server, because there <b>isn't one</b>. <mark class="bh">No analytics, no accounts, no telemetry.</mark></dd>
         </div>
         <div class="fact">
           <dt>Without a key</dt>
@@ -1072,7 +1090,7 @@
 
     <section id="manual">
       <div class="head">
-        <h2>Install it on Windows or macOS</h2>
+        <h2><mark class="bh">Install it on Windows or macOS</mark></h2>
         <p class="lead">The same unpacked extension runs on both, in any Chromium browser: Chrome, Edge, Brave, Opera, Arc. There's nothing to build or compile.</p>
       </div>
       <div class="manual">
@@ -1135,19 +1153,19 @@
       </div>
       <div class="stops four">
         <div class="stop">
-          <h3>Keep talking</h3>
+          <h3><mark class="bh">Keep talking</mark></h3>
           <p>Capture is automatic. The thread is re-saved a few seconds after each new turn. Nothing to press.</p>
         </div>
         <div class="stop">
-          <h3>Pick a line</h3>
+          <h3><mark class="bh">Pick a line</mark></h3>
           <p>Open the panel from the launcher or the shortcut. The destinations sit on one trunk; click the one you want to continue on.</p>
         </div>
         <div class="stop">
-          <h3>Read what it typed</h3>
+          <h3><mark class="bh">Read what it typed</mark></h3>
           <p>The target opens with the brief already in its composer. Edit it if you like, then press that assistant's own send button.</p>
         </div>
         <div class="stop">
-          <h3>Sharpen anything</h3>
+          <h3><mark class="bh">Sharpen anything</mark></h3>
           <p>With a half-written prompt in the composer, press Enhance. It rewrites in place, and Undo returns your wording untouched.</p>
         </div>
       </div>
@@ -1156,7 +1174,7 @@
     <section id="install">
       <div class="install">
         <h2>The short version</h2>
-        <p class="lead">Unpacked, from source, on Windows or macOS. No build step, no dependencies, no account. The Groq key is optional and free.</p>
+        <p class="lead"><mark class="bh">Unpacked, from source, on Windows or macOS. No build step, no dependencies, no account. The Groq key is optional and free.</mark></p>
         <ol>
           <li>Download the ZIP and unpack it, or clone the repo.</li>
           <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code>) and turn on Developer mode.</li>
@@ -1254,6 +1272,22 @@
   })();
 </script>
 <script src="starfield.js" data-mount></script>
+<script>
+/* Blur highlight: paragraph unblurs, then marks sweep in left to right. Re-animates on re-entry. */
+(function () {
+  var scopes = new Set();
+  document.querySelectorAll('mark.bh').forEach(function (m) { scopes.add(m.parentElement); });
+  scopes.forEach(function (el) {
+    el.classList.add('bh-scope');
+    el.querySelectorAll('mark.bh').forEach(function (m, i) { m.style.setProperty('--i', i); });
+  });
+  if (!('IntersectionObserver' in window)) { scopes.forEach(function (el) { el.classList.add('bh-in'); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { e.target.classList.toggle('bh-in', e.isIntersecting); });
+  }, { threshold: 0.4 });
+  scopes.forEach(function (el) { io.observe(el); });
+})();
+</script>
 <script src="glow-cursor.js"></script>
 <script>
   /* A pointer trail across the whole page. Fine pointers only, and never
@@ -1263,8 +1297,8 @@
     if (!window.matchMedia('(pointer: fine)').matches) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     glowCursor(document.body, {
-      color: '#ffffff',
-      secondaryColor: '#ffffff',
+      color: '#0090ec',
+      secondaryColor: '#0090ec',
       trailLength: 32,
       trailWidth: 2,
       trailTaper: 0.8,
