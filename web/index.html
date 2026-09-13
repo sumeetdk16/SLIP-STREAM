@@ -805,6 +805,30 @@
     section { padding-top: 56px; padding-bottom: 56px; }
     .wrap { padding-inline: 18px; }
   }
+  /* Phone: the diagram's labels scale down with the drawing, so they get a
+     larger size in drawing units to stay readable at ~11px on screen. */
+  @media (max-width: 560px) {
+    .diagram svg text { font-size: 25px; letter-spacing: 1px; }
+    .legend span { font-size: 13.5px; }
+    .install { padding: 28px 20px; border-radius: var(--r-lg); }
+    .install .btn { width: 100%; justify-content: center; }
+    .os { padding: 20px 16px 22px; }
+    .os li { padding-left: 30px; }
+    .note { padding: 16px; }
+    .slab .cap { padding-left: 14px; padding-right: 14px; }
+    .krow2 { flex-wrap: wrap; gap: 6px 14px; }
+  }
+  /* Tablet: single-column blocks use the whole width instead of a narrow
+     column floating left; two-up where the content is short. */
+  @media (min-width: 561px) and (max-width: 960px) {
+    .pair { max-width: none; }
+    .install { padding: 40px 36px; }
+    .stops .stop { padding-right: 18px; }
+  }
+  @media (min-width: 761px) and (max-width: 860px) {
+    .manual { grid-template-columns: 1fr 1fr; gap: 14px; }
+    .os { padding: 20px 18px 22px; }
+  }
   /* Offscreen sections skip layout and paint until they approach the view. */
   main > section { content-visibility: auto; contain-intrinsic-size: auto 900px; }
   /* The homepage diagram gets more room: it reaches past the column edge
