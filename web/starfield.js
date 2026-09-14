@@ -77,10 +77,19 @@
       }
     }
 
+    var touch = global.matchMedia && global.matchMedia("(pointer: coarse)").matches;
+
     function resize() {
       var ow = canvas.width, oh = canvas.height;
+      var nw = isPage ? window.innerWidth : host.clientWidth;
+      var nh = isPage ? window.innerHeight : host.clientHeight;
+      if (nw === ow && nh === oh) return;
+      /* A phone's address bar grows and shrinks the viewport by ~100px on
+         every scroll direction change. Resizing the canvas for that clears
+         it and rescales every star — a visible jolt. Keep the width-driven
+         resize and let CSS stretch the canvas over small height changes. */
+      if (touch && isPage && nw === ow && Math.abs(nh - oh) < 160) return;
       measure();
-      if (ow === w && oh === h) return;
       canvas.width = w;
       canvas.height = h;
       if (!stars.length || !ow || !oh) return bigBang();
@@ -94,7 +103,8 @@
       }
     }
 
-    function update() {
+    function update(dt) {
+      if (dt == null) dt = 1;
       var mx = (cursor.x - cx) / o.easing;
       var my = (cursor.y - cy) / o.easing;
       for (var i = 0; i < stars.length; i++) {
@@ -103,15 +113,15 @@
         s[5] = s[3];
         s[6] = s[4];
 
-        s[0] += mx >> 4;
+        s[0] += (mx >> 4) * dt;
         if (s[0] > cx << 1) { s[0] -= w << 1; s[7] = false; }
         if (s[0] < -cx << 1) { s[0] += w << 1; s[7] = false; }
 
-        s[1] += my >> 4;
+        s[1] += (my >> 4) * dt;
         if (s[1] > cy << 1) { s[1] -= h << 1; s[7] = false; }
         if (s[1] < -cy << 1) { s[1] += h << 1; s[7] = false; }
 
-        s[2] -= speed;
+        s[2] -= speed * dt;
         if (s[2] > z) { s[2] -= z; s[7] = false; }
         if (s[2] < 0) { s[2] += z; s[7] = false; }
 
@@ -136,9 +146,14 @@
       }
     }
 
-    function frame() {
+    var last = 0;
+    function frame(now) {
+      /* Step in 60fps units, so a 120Hz screen doesn't run the field at
+         double speed; capped so a background tab doesn't jump on return. */
+      var dt = last && now ? Math.min((now - last) / 16.667, 3) : 1;
+      last = now || 0;
       resize();
-      update();
+      update(dt);
       draw();
       raf = requestAnimationFrame(frame);
     }

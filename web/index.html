@@ -254,9 +254,30 @@
     line-height: 0.92;
     text-transform: uppercase;
     max-width: 13ch;
-    color: var(--dim);
+    color: #fff;
   }
   h1 .y { color: var(--accent); }
+  /* Gradient flow (port of reactbits.dev GradientText, yoyo, 8s) */
+  .gradient-flow {
+    background-image: linear-gradient(to right, #3b82f6, #a5c8ff, #6366f1, #3b82f6);
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    animation: gradient-flow 8s linear infinite alternate;
+  }
+  @keyframes gradient-flow { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+  @media (prefers-reduced-motion: reduce) { .gradient-flow { animation: none; } }
+  /* Shuffle text (port of reactbits.dev Shuffle, direction: right) */
+  .js [data-shuffle]:not(.shuffle-ready) { visibility: hidden; }
+  .shuffle { color: #fff; }
+  /* Typewriter (port of reactbits.dev TextType): the untyped remainder stays
+     in flow but hidden, so the paragraph never reflows while typing. */
+  .type-rest { visibility: hidden; }
+  .type-cursor { display: inline-block; width: 0; overflow: visible; animation: type-blink 1s steps(1) infinite; }
+  @keyframes type-blink { 50% { opacity: 0; } }
+  .shuffle-wrap { display: inline-block; overflow: hidden; vertical-align: bottom; }
+  .shuffle-strip { display: inline-block; white-space: nowrap; will-change: transform; }
+  .shuffle-strip > span { display: inline-block; text-align: center; }
   .hero .lede {
     margin-top: clamp(20px, 2.4vh, 30px);
     font-size: clamp(16px, min(1.4vw, 2.4vh), 22px);
@@ -750,7 +771,7 @@
   /* The one button that acts leans toward the cursor a few pixels — the same
      "white is the thing that moves" rule the runner and the route already
      make, applied to the single control it would mean the most on. */
-  .btn.primary { transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), background 0.15s, border-color 0.15s; }
+  .btn.primary { transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), background 0.15s, border-color 0.15s, color 0.15s; }
 
   /* ------------------------------------------------------------- reveal */
   /* Gains, line rows and stops arrive as the page is scrolled to them —
@@ -860,7 +881,7 @@
     <a class="brand" href="#top" aria-label="Slipstream">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M2 17h20" stroke="#3a3a3a" stroke-width="2.4" stroke-linecap="butt" />
-        <path d="M2 17h4.6l7-10H22" stroke="#0090ec" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter" />
+        <path d="M2 17h4.6l7-10H22" stroke="#ffffff" stroke-width="3.4" stroke-linecap="butt" stroke-linejoin="miter" />
       </svg>
       <span>Slipstream</span>
     </a>
@@ -877,8 +898,8 @@
 <main id="top">
   <div class="wrap hero">
    <div class="hero-copy">
-    <h1>Switch models without <span class="y">losing speed</span></h1>
-    <p class="lede">
+    <h1>Switch <span class="shuffle" data-shuffle>models</span> without <span class="y gradient-flow">losing speed</span></h1>
+    <p class="lede" data-type>
       You hit a cap on one assistant and re-explain everything to the next. Slipstream carries the
       thread across as a brief, typed straight into the next one's composer.
     </p>
@@ -1264,8 +1285,15 @@
   });
   if (!('IntersectionObserver' in window)) { scopes.forEach(function (el) { el.classList.add('bh-in'); }); return; }
   var io = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) { e.target.classList.toggle('bh-in', e.isIntersecting); });
-  }, { threshold: 0.4 });
+    entries.forEach(function (e) {
+      // Unblur at 40% visible, or once it fills 40% of the screen — a
+      // paragraph taller than the viewport never reaches a 0.4 ratio.
+      var vh = e.rootBounds ? e.rootBounds.height : window.innerHeight;
+      if (e.intersectionRatio >= 0.4 || e.intersectionRect.height >= vh * 0.4) e.target.classList.add('bh-in');
+      // Re-blur only once it has fully left, so it never blurs mid-read.
+      else if (!e.isIntersecting) e.target.classList.remove('bh-in');
+    });
+  }, { threshold: [0, 0.1, 0.2, 0.3, 0.4] });
   scopes.forEach(function (el) { io.observe(el); });
 })();
 </script>
@@ -1294,7 +1322,7 @@
       idleFade: true,
       idleTimeout: 700,
       fadeDuration: 900,
-      maxDevicePixelRatio: 1.5,
+      maxDevicePixelRatio: 1,
       enabled: true,
       blendMode: 'normal'
     });
@@ -1441,8 +1469,12 @@
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
-        entry.target.classList.add('in');
-        io.unobserve(entry.target);
+        var el = entry.target;
+        el.classList.add('in');
+        io.unobserve(el);
+        // The stagger is for the entrance only; left in place it would
+        // delay every later transition on the element.
+        setTimeout(function () { el.style.transitionDelay = ''; }, 900);
       });
     }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
     groups.forEach(function (g) {
@@ -1474,6 +1506,113 @@
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) { if (e.isIntersecting) { run(e.target); io.unobserve(e.target); } });
     }, { threshold: 0.6 });
-    counters.forEach(function (c) { io.observe(c); });
+    // Start from zero, so the final figure doesn't flash and then drop back.
+    counters.forEach(function (c) { c.textContent = '0'; io.observe(c); });
+  })();
+</script>
+
+
+<script>
+  /* Shuffle text (port of reactbits.dev Shuffle): each letter slides in from
+     the left through a strip of copies, odd letters first, then even. Loops
+     continuously (loop=true, duration=1.45). */
+  (function () {
+    var el = document.querySelector('[data-shuffle]');
+    if (!el) return;
+    var text = el.textContent;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var DUR = 1450, STAGGER = 30, ROLLS = 1, LOOP = true;
+    var EASE = 'cubic-bezier(0.215, 0.61, 0.355, 1)'; /* power3.out */
+    var playing = false;
+    el.setAttribute('aria-label', text);
+
+    function still() {
+      el.textContent = text;
+      el.removeAttribute('aria-hidden');
+    }
+
+    function play() {
+      if (playing) return;
+      playing = true;
+      still();
+      /* Measure each glyph as laid out (h1 is uppercased by CSS). */
+      el.textContent = '';
+      var chars = Array.from(text).map(function (ch) {
+        var s = document.createElement('span');
+        s.style.display = 'inline-block';
+        s.textContent = ch;
+        el.appendChild(s);
+        return s;
+      });
+      var strips = chars.map(function (ch) {
+        var w = ch.getBoundingClientRect().width;
+        var wrap = document.createElement('span'); wrap.className = 'shuffle-wrap';
+        wrap.style.width = w + 'px';
+        var strip = document.createElement('span'); strip.className = 'shuffle-strip';
+        /* right: real glyph first, copies, then the starting glyph last */
+        for (var k = 0; k < ROLLS + 2; k++) {
+          var c = document.createElement('span');
+          c.style.width = w + 'px';
+          c.textContent = ch.textContent;
+          c.setAttribute('aria-hidden', 'true');
+          strip.appendChild(c);
+        }
+        strip.dataset.start = -(ROLLS + 1) * w;
+        strip.style.transform = 'translateX(' + strip.dataset.start + 'px)';
+        wrap.appendChild(strip);
+        el.replaceChild(wrap, ch);
+        return strip;
+      });
+      el.classList.add('shuffle-ready');
+
+      var odd = strips.filter(function (_, i) { return i % 2 === 1; });
+      var even = strips.filter(function (_, i) { return i % 2 === 0; });
+      var oddTotal = DUR + Math.max(0, odd.length - 1) * STAGGER;
+      var evenStart = odd.length ? oddTotal * 0.7 : 0;
+      var anims = [];
+      function run(group, at) {
+        group.forEach(function (strip, i) {
+          anims.push(strip.animate([
+            { transform: 'translateX(' + strip.dataset.start + 'px)' },
+            { transform: 'translateX(0px)' }
+          ], { duration: DUR, delay: at + i * STAGGER, easing: EASE, fill: 'forwards' }).finished);
+        });
+      }
+      run(odd, 0);
+      run(even, evenStart);
+      Promise.all(anims).then(function () { still(); playing = false; if (LOOP) play(); });
+    }
+
+    if (reduce) { el.classList.add('shuffle-ready'); return; }
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () {
+      play();
+      el.addEventListener('mouseenter', play);
+    });
+  })();
+</script>
+
+<script>
+  /* Typewriter on the hero lede: types once with a blinking cursor. */
+  (function () {
+    var el = document.querySelector('[data-type]');
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var text = el.textContent.trim().replace(/\s+/g, ' ');
+    var SPEED = 28, START = 600;
+    el.setAttribute('aria-label', text);
+    var typed = document.createElement('span');
+    var cursor = document.createElement('span'); cursor.className = 'type-cursor'; cursor.textContent = '|';
+    var rest = document.createElement('span'); rest.className = 'type-rest'; rest.textContent = text;
+    [typed, cursor, rest].forEach(function (n) { n.setAttribute('aria-hidden', 'true'); });
+    el.textContent = '';
+    el.append(typed, cursor, rest);
+    var i = 0;
+    function step() {
+      i++;
+      typed.textContent = text.slice(0, i);
+      rest.textContent = text.slice(i);
+      if (i < text.length) setTimeout(step, SPEED + Math.random() * 30);
+    }
+    setTimeout(step, START);
   })();
 </script>

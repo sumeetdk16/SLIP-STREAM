@@ -75,7 +75,10 @@ void main() {
   vec3 colorSum = vec3(0.0);
   for (int i = 0; i < MAX_POINTS - 1; i++) {
     float index = float(i);
-    float active = 1.0 - step(uPointCount - 1.0, index);
+    // Segments past the trail length contribute nothing; stop there
+    // instead of shading all 63 for every pixel.
+    if (index >= uPointCount - 1.0) break;
+    float active = 1.0;
     vec2 start = uPoints[i];
     vec2 end = uPoints[i + 1];
     vec2 toPixel = pixel - start;
@@ -205,6 +208,7 @@ void main() {
     var target = { x: 0, y: 0 };
     var head = { x: 0, y: 0 };
 
+    var colors = [hexToRgb(config.color), hexToRgb(config.secondaryColor)];
     var width = 1, height = 1;
     var initialized = false;
     var pointerInside = false;
@@ -282,8 +286,8 @@ void main() {
       gl.uniform2f(u.uResolution, width, height);
       gl.uniform2fv(u.uPoints, pointData);
       gl.uniform1f(u.uPointCount, clamp(Math.round(config.trailLength), 2, MAX_POINTS));
-      gl.uniform3fv(u.uColor, hexToRgb(config.color));
-      gl.uniform3fv(u.uSecondaryColor, hexToRgb(config.secondaryColor));
+      gl.uniform3fv(u.uColor, colors[0]);
+      gl.uniform3fv(u.uSecondaryColor, colors[1]);
       gl.uniform1f(u.uTrailWidth, Math.max(config.trailWidth, 0.1));
       gl.uniform1f(u.uTaper, clamp(config.trailTaper, 0, 1));
       gl.uniform1f(u.uGlowIntensity, Math.max(config.glowIntensity, 0));
@@ -322,6 +326,7 @@ void main() {
     return {
       set: function (next) {
         Object.assign(config, next);
+        colors = [hexToRgb(config.color), hexToRgb(config.secondaryColor)];
         canvas.style.mixBlendMode = config.blendMode;
         if ("maxDevicePixelRatio" in next) resize();
         wake();

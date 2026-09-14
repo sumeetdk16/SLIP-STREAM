@@ -211,7 +211,12 @@
       "url(#" + id + ") blur(" + o.blur + "px) saturate(" + o.saturate + ")";
 
     let timer = null;
+    let lastW = el.offsetWidth, lastH = el.offsetHeight;
     const ro = new ResizeObserver(function () {
+      // The observer fires once on observe(); only rebuild the map (a
+      // canvas encode) when the box really changed size.
+      if (el.offsetWidth === lastW && el.offsetHeight === lastH) return;
+      lastW = el.offsetWidth; lastH = el.offsetHeight;
       clearTimeout(timer);
       timer = setTimeout(refresh, 120);
     });
