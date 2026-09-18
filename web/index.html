@@ -287,45 +287,20 @@
   @keyframes gradient-flow { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
   @media (prefers-reduced-motion: reduce) { .gradient-flow { animation: none; } }
   
-  /* Line Fill Text Effect */
+  /* Line Fill Text Effect - Canvas-based animated ribbons */
   .line-fill-text {
     position: relative;
     display: inline-block;
-    color: #fff;
+    color: rgba(255, 255, 255, 0.15);
     font-weight: 800;
   }
-  .line-fill-text::before {
-    content: '';
+  .line-fill-text canvas {
     position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent 0px,
-      transparent 3px,
-      #e5484d 3px,
-      #e5484d 5px
-    );
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 100%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 100%);
-    -webkit-mask-size: 200% 100%;
-    mask-size: 200% 100%;
-    -webkit-mask-position: 100% 0;
-    mask-position: 100% 0;
-    animation: line-fill 3s ease-in-out infinite alternate;
-    mix-blend-mode: screen;
-  }
-  @keyframes line-fill {
-    from { 
-      -webkit-mask-position: 100% 0;
-      mask-position: 100% 0;
-    }
-    to { 
-      -webkit-mask-position: 0% 0;
-      mask-position: 0% 0;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) { 
-    .line-fill-text::before { animation: none; mask-position: 0% 0; -webkit-mask-position: 0% 0; } 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
   
   /* Shuffle text (port of reactbits.dev Shuffle, direction: right) */
@@ -963,7 +938,7 @@
 <main id="top">
   <div class="wrap hero">
    <div class="hero-copy">
-    <h1>Switch <span class="shuffle">models</span> without <span class="line-fill-text">losing speed</span></h1>
+    <h1>Switch <span class="shuffle">models</span> without <span class="line-fill-text" data-line-fill>losing speed</span></h1>
     <p class="lede" data-type>
       You hit a cap on one assistant and re-explain everything to the next. Slipstream carries the
       thread across as a brief, typed straight into the next one's composer.
@@ -1706,4 +1681,84 @@
     }
     setTimeout(step, START);
   })();
+</script>
+
+<script>
+/* Line Fill Text - Canvas-based animated ribbons clipped inside text */
+(function () {
+  const elements = document.querySelectorAll('[data-line-fill]');
+  if (!elements.length) return;
+
+  elements.forEach(function (el) {
+    const canvas = document.createElement('canvas');
+    el.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    
+    let animationId;
+    let time = 0;
+    
+    function resize() {
+      const rect = el.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      ctx.scale(dpr, dpr);
+    }
+    
+    function draw() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      // Create text mask
+      ctx.save();
+      ctx.font = getComputedStyle(el).font;
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#000';
+      ctx.fillText(el.textContent, 0, 0);
+      ctx.globalCompositeOperation = 'source-in';
+      
+      // Draw animated ribbons
+      const spacing = 4;
+      const amplitude = Math.sin(time * 0.0005) * 30;
+      const offset = (time * 0.05) % (spacing * 2);
+      
+      ctx.strokeStyle = '#e5484d';
+      ctx.lineWidth = 2;
+      
+      for (let y = -offset; y < h + spacing; y += spacing) {
+        ctx.beginPath();
+        for (let x = 0; x <= w; x += 5) {
+          const wave = Math.sin((x * 0.02) + (time * 0.002)) * amplitude;
+          const yPos = y + wave;
+          if (x === 0) ctx.moveTo(x, yPos);
+          else ctx.lineTo(x, yPos);
+        }
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+      time++;
+      animationId = requestAnimationFrame(draw);
+    }
+    
+    resize();
+    window.addEventListener('resize', resize);
+    
+    // Intersection observer for performance
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          draw();
+        } else if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      });
+    });
+    io.observe(el);
+  });
+})();
 </script>
