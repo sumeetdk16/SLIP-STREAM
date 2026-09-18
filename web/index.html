@@ -756,6 +756,8 @@
   }
   footer a { color: var(--dim); text-decoration: none; text-underline-offset: 3px; }
   footer a:hover { color: var(--accent); text-decoration: underline; }
+  footer a:hover svg { transform: scale(1.1); }
+  footer a svg { transition: transform 0.2s ease; }
   footer .sp { margin-left: auto; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1288,8 +1290,16 @@
     <footer>
       <span>Slipstream. Chrome Extension APIs, Groq, and no server at all.</span>
       <span class="sp"></span>
-      <a href="https://github.com" rel="noopener">Source</a>
+      <a href="https://github.com/sumeetdk16/SLIP-STREAM" rel="noopener">Source</a>
       <a href="https://console.groq.com/keys" rel="noopener">Groq keys</a>
+      <span class="sp"></span>
+      <span style="color: var(--dim);">Made by</span>
+      <a href="https://x.com/sumeetcodes" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 500;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        Sumeet.K
+      </a>
     </footer>
   </div>
 </main>
