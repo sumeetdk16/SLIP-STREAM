@@ -1426,6 +1426,23 @@
     apply();
 
     var links = [].slice.call(document.querySelectorAll('.nav-links a[href^="#"]'));
+    
+    /* Ensure smooth scrolling works for anchor links */
+    links.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        var href = this.getAttribute('href');
+        var target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          /* Update URL without jumping */
+          if (history.pushState) {
+            history.pushState(null, null, href);
+          }
+        }
+      });
+    });
+    
     var sections = links
       .map(function (a) {
         return { link: a, el: document.querySelector(a.getAttribute('href')) };
