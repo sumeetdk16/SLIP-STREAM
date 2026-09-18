@@ -286,23 +286,6 @@
   }
   @keyframes gradient-flow { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
   @media (prefers-reduced-motion: reduce) { .gradient-flow { animation: none; } }
-  
-  /* Line Fill Text Effect - Canvas-based animated ribbons */
-  .line-fill-text {
-    position: relative;
-    display: inline-block;
-    color: rgba(255, 255, 255, 0.15);
-    font-weight: 800;
-  }
-  .line-fill-text canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-  
   /* Shuffle text (port of reactbits.dev Shuffle, direction: right) */
   .js [data-shuffle]:not(.shuffle-ready) { visibility: hidden; }
   .shuffle { color: #fff; }
@@ -938,7 +921,7 @@
 <main id="top">
   <div class="wrap hero">
    <div class="hero-copy">
-    <h1>Switch <span class="shuffle">models</span> without <span class="line-fill-text" data-line-fill>losing speed</span></h1>
+    <h1><span data-shuffle>Switch</span> <span class="shuffle">models</span> without <span class="y gradient-flow">losing speed</span></h1>
     <p class="lede" data-type>
       You hit a cap on one assistant and re-explain everything to the next. Slipstream carries the
       thread across as a brief, typed straight into the next one's composer.
@@ -1587,8 +1570,8 @@
     if (!el) return;
     var text = el.textContent;
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var DUR = 1450, STAGGER = 30, ROLLS = 1, LOOP = true;
-    var EASE = 'cubic-bezier(0.215, 0.61, 0.355, 1)'; /* power3.out */
+    var DUR = 1500, STAGGER = 30, ROLLS = 1, LOOP = true;
+    var EASE = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; /* power2.out */
     var playing = false;
     el.setAttribute('aria-label', text);
 
@@ -1681,84 +1664,4 @@
     }
     setTimeout(step, START);
   })();
-</script>
-
-<script>
-/* Line Fill Text - Canvas-based animated ribbons clipped inside text */
-(function () {
-  const elements = document.querySelectorAll('[data-line-fill]');
-  if (!elements.length) return;
-
-  elements.forEach(function (el) {
-    const canvas = document.createElement('canvas');
-    el.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    
-    let animationId;
-    let time = 0;
-    
-    function resize() {
-      const rect = el.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      canvas.style.width = rect.width + 'px';
-      canvas.style.height = rect.height + 'px';
-      ctx.scale(dpr, dpr);
-    }
-    
-    function draw() {
-      const w = canvas.width / (window.devicePixelRatio || 1);
-      const h = canvas.height / (window.devicePixelRatio || 1);
-      
-      ctx.clearRect(0, 0, w, h);
-      
-      // Create text mask
-      ctx.save();
-      ctx.font = getComputedStyle(el).font;
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = '#000';
-      ctx.fillText(el.textContent, 0, 0);
-      ctx.globalCompositeOperation = 'source-in';
-      
-      // Draw animated ribbons
-      const spacing = 4;
-      const amplitude = Math.sin(time * 0.0005) * 30;
-      const offset = (time * 0.05) % (spacing * 2);
-      
-      ctx.strokeStyle = '#e5484d';
-      ctx.lineWidth = 2;
-      
-      for (let y = -offset; y < h + spacing; y += spacing) {
-        ctx.beginPath();
-        for (let x = 0; x <= w; x += 5) {
-          const wave = Math.sin((x * 0.02) + (time * 0.002)) * amplitude;
-          const yPos = y + wave;
-          if (x === 0) ctx.moveTo(x, yPos);
-          else ctx.lineTo(x, yPos);
-        }
-        ctx.stroke();
-      }
-      
-      ctx.restore();
-      time++;
-      animationId = requestAnimationFrame(draw);
-    }
-    
-    resize();
-    window.addEventListener('resize', resize);
-    
-    // Intersection observer for performance
-    const io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          draw();
-        } else if (animationId) {
-          cancelAnimationFrame(animationId);
-        }
-      });
-    });
-    io.observe(el);
-  });
-})();
 </script>
