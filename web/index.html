@@ -286,6 +286,48 @@
   }
   @keyframes gradient-flow { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
   @media (prefers-reduced-motion: reduce) { .gradient-flow { animation: none; } }
+  
+  /* Line Fill Text Effect */
+  .line-fill-text {
+    position: relative;
+    display: inline-block;
+    color: #fff;
+    font-weight: 800;
+  }
+  .line-fill-text::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 3px,
+      #e5484d 3px,
+      #e5484d 5px
+    );
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 100%);
+    -webkit-mask-size: 200% 100%;
+    mask-size: 200% 100%;
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+    animation: line-fill 3s ease-in-out infinite alternate;
+    mix-blend-mode: screen;
+  }
+  @keyframes line-fill {
+    from { 
+      -webkit-mask-position: 100% 0;
+      mask-position: 100% 0;
+    }
+    to { 
+      -webkit-mask-position: 0% 0;
+      mask-position: 0% 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) { 
+    .line-fill-text::before { animation: none; mask-position: 0% 0; -webkit-mask-position: 0% 0; } 
+  }
+  
   /* Shuffle text (port of reactbits.dev Shuffle, direction: right) */
   .js [data-shuffle]:not(.shuffle-ready) { visibility: hidden; }
   .shuffle { color: #fff; }
@@ -921,7 +963,7 @@
 <main id="top">
   <div class="wrap hero">
    <div class="hero-copy">
-    <h1>Switch <span class="shuffle">models</span> without <span class="y gradient-flow">losing speed</span></h1>
+    <h1>Switch <span class="shuffle">models</span> without <span class="line-fill-text">losing speed</span></h1>
     <p class="lede" data-type>
       You hit a cap on one assistant and re-explain everything to the next. Slipstream carries the
       thread across as a brief, typed straight into the next one's composer.
