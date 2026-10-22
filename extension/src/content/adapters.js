@@ -267,32 +267,38 @@
     copilot: {
       extract() {
         // Try multiple selector strategies for Copilot's markup
+        // Copilot has different layouts for chat vs search modes
         const pairs = orderedByRole({
           user: [
             '[data-content="user-message"]',
             '[data-testid="user-message"]',
             '[class*="user-message"]',
             'cib-message-group[source="user"]',
-            '.user-message'
+            '.user-message',
+            'cib-message[type="user"]',
+            '[class*="request"]'
           ],
           assistant: [
             '[data-content="ai-message"]',
             '[data-testid="ai-message"]',
             '[class*="bot-message"]',
             'cib-message-group[source="bot"]',
-            '.bot-message'
+            '.bot-message',
+            'cib-message[type="bot"]',
+            '[class*="response"]',
+            '[class*="answer"]'
           ]
         });
         
         // Fallback: look for message groups
         if (!pairs.length) {
-          const messages = Array.from(document.querySelectorAll('cib-message-group, [class*="message-group"]')).filter(el => {
+          const messages = Array.from(document.querySelectorAll('cib-message-group, cib-message, [class*="message-group"], [class*="turn-"]')).filter(el => {
             return readText(el).length > MIN_MESSAGE_CHARS;
           });
           return collect(messages.map(el => {
-            const source = el.getAttribute('source');
+            const source = el.getAttribute('source') || el.getAttribute('type');
             const classes = el.className || '';
-            const isUser = source === 'user' || classes.includes('user');
+            const isUser = source === 'user' || classes.includes('user') || classes.includes('request');
             return { el, role: isUser ? 'user' : 'assistant' };
           }));
         }
@@ -304,11 +310,19 @@
         'textarea[placeholder*="Ask"]',
         'textarea[id*="searchbox"]',
         'cib-text-input textarea',
+        'textarea[placeholder*="me anything"]',
+        'textarea.textarea',
+        '[class*="input"] textarea',
         'textarea[placeholder]',
-        'div[contenteditable="true"]'
+        'div[contenteditable="true"]',
+        '[contenteditable="true"][role="textbox"]'
       ]),
       title: () => document.title.replace(/\s*[—|-]\s*(Microsoft\s*)?Copilot\s*$/i, ''),
-      threadKey: () => location.pathname + location.search
+      threadKey: () => {
+        // Extract conversation ID from URL if present
+        const match = location.search.match(/[?&](?:threadId|conversationId|id)=([^&]+)/);
+        return match ? `copilot-${match[1]}` : location.pathname + location.search;
+      }
     },
 
     grok: {

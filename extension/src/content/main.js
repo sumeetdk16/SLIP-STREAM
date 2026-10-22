@@ -18,7 +18,7 @@
   window.__slipstreamLoaded = true;
 
   const AUTO_CAPTURE_DEBOUNCE_MS = 4000;
-  const COMPOSER_WAIT_MS = 20000;
+  const COMPOSER_WAIT_MS = 8000; // Reduced from 20s to 8s
   /**
    * Extraction walks and clones every message in the thread, so an automatic
    * capture is never cheap. These pages mutate constantly even when nobody is
@@ -135,8 +135,22 @@
       const debug = localStorage.getItem('slipstream-debug') === 'true';
       let attempts = 0;
       
+      // More aggressive checking - reduced interval
+      const checkInterval = platform.id === 'copilot' ? 250 : 200; // Faster polling
+      
       const tick = () => {
         attempts++;
+        
+        // For Copilot, also check if we're in chat mode by looking for conversation elements
+        if (platform.id === 'copilot') {
+          const inChatMode = document.querySelector('cib-serp, cib-conversation, [class*="conversation"], cib-chat');
+          if (!inChatMode && Date.now() - started < 3000) { // Only wait 3s for chat mode
+            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Copilot chat mode...');
+            setTimeout(tick, 300);
+            return;
+          }
+        }
+        
         const el = SlipstreamAdapters.getComposer();
         if (el) {
           if (debug) console.log(`[Slipstream] Composer found after ${attempts} attempts (${Date.now() - started}ms)`);
@@ -146,7 +160,7 @@
           if (debug) console.log(`[Slipstream] Composer timeout after ${attempts} attempts`);
           return resolve(null);
         }
-        setTimeout(tick, 400);
+        setTimeout(tick, checkInterval);
       };
       tick();
     });
@@ -172,8 +186,17 @@
       return;
     }
     
-    // Small delay to ensure page is fully interactive
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Reduced delays - faster paste
+    const delay = platform.id === 'copilot' ? 300 : 150; // Much shorter delays
+    await new Promise(resolve => setTimeout(resolve, delay));
+    
+    // Focus the composer first to ensure it's ready
+    try {
+      composer.focus();
+      await new Promise(resolve => setTimeout(resolve, 100)); // Faster focus delay
+    } catch (e) {
+      if (debug) console.log('[Slipstream] Could not focus composer:', e);
+    }
     
     SlipstreamAdapters.writeComposer(composer, entry.text);
     widget?.notify('Context carried over. Review it, then send.');
@@ -298,8 +321,10 @@
     await mountWidget();
     startLimitWatcher();
     watchThreadChanges();
+    // Start handoff check immediately (no delay)
     await applyPendingHandoff();
-    setTimeout(() => captureNow().catch(() => {}), 1500);
+    // Reduced initial capture delay
+    setTimeout(() => captureNow().catch(() => {}), 800);
   }
 
   if (document.readyState === 'loading') {

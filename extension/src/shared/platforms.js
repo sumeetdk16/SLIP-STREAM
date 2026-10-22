@@ -66,7 +66,7 @@
       // Lifted from Copilot's brand blue: at #0a68c9 it was indistinguishable
       // from the Gemini line wherever the two sit on the same map.
       color: '#4cc2ff',
-      newChatUrl: 'https://copilot.microsoft.com/',
+      newChatUrl: 'https://copilot.microsoft.com/?showconv=1',
       hosts: ['copilot.microsoft.com'],
       limitPatterns: [
         "you've reached your daily limit",
