@@ -132,10 +132,20 @@
   function waitForComposer(timeout = COMPOSER_WAIT_MS) {
     return new Promise((resolve) => {
       const started = Date.now();
+      const debug = localStorage.getItem('slipstream-debug') === 'true';
+      let attempts = 0;
+      
       const tick = () => {
+        attempts++;
         const el = SlipstreamAdapters.getComposer();
-        if (el) return resolve(el);
-        if (Date.now() - started > timeout) return resolve(null);
+        if (el) {
+          if (debug) console.log(`[Slipstream] Composer found after ${attempts} attempts (${Date.now() - started}ms)`);
+          return resolve(el);
+        }
+        if (Date.now() - started > timeout) {
+          if (debug) console.log(`[Slipstream] Composer timeout after ${attempts} attempts`);
+          return resolve(null);
+        }
         setTimeout(tick, 400);
       };
       tick();
@@ -143,10 +153,13 @@
   }
 
   async function applyPendingHandoff() {
+    const debug = localStorage.getItem('slipstream-debug') === 'true';
     let entry;
     try {
       ({ entry } = await send('CONSUME_PENDING', { platformId: platform.id }));
-    } catch {
+      if (debug) console.log('[Slipstream] Pending handoff:', entry ? 'found' : 'none');
+    } catch (err) {
+      if (debug) console.error('[Slipstream] Failed to consume pending:', err);
       return;
     }
     if (!entry) return;
@@ -155,10 +168,16 @@
     if (!composer) {
       await navigator.clipboard.writeText(entry.text).catch(() => {});
       widget?.notify('Could not find the composer — context copied to clipboard', true);
+      if (debug) console.log('[Slipstream] Context copied to clipboard as fallback');
       return;
     }
+    
+    // Small delay to ensure page is fully interactive
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     SlipstreamAdapters.writeComposer(composer, entry.text);
     widget?.notify('Context carried over. Review it, then send.');
+    if (debug) console.log('[Slipstream] Context auto-pasted successfully');
   }
 
   /* ---------------------------------------------------------------- limits */

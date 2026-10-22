@@ -25,16 +25,26 @@
   }
 
   function firstEl(selectors, scope = document) {
+    const debug = localStorage.getItem('slipstream-debug') === 'true';
+    
     for (const sel of selectors) {
       const el = scope.querySelector(sel);
-      if (el && el.offsetParent !== null) return el;
+      if (el && el.offsetParent !== null) {
+        if (debug) console.log('[Slipstream] Found element with selector:', sel);
+        return el;
+      }
     }
     // Second pass without the visibility test: some composers are position:fixed
     // with an offsetParent of null while perfectly usable.
     for (const sel of selectors) {
       const el = scope.querySelector(sel);
-      if (el) return el;
+      if (el) {
+        if (debug) console.log('[Slipstream] Found element (no visibility check):', sel);
+        return el;
+      }
     }
+    
+    if (debug) console.log('[Slipstream] No element found from selectors:', selectors);
     return null;
   }
 
@@ -136,18 +146,51 @@
   const adapters = {
     chatgpt: {
       extract() {
-        const nodes = Array.from(document.querySelectorAll('[data-message-author-role]'));
+        // Try multiple selector strategies for ChatGPT's evolving markup
+        let nodes = Array.from(document.querySelectorAll('[data-message-author-role]'));
+        
+        // Fallback: look for message containers with role attributes
+        if (!nodes.length) {
+          nodes = Array.from(document.querySelectorAll('[data-testid*="conversation-turn"]'));
+        }
+        
+        // Fallback: look for common message wrapper patterns
+        if (!nodes.length) {
+          nodes = Array.from(document.querySelectorAll('main [class*="group"]')).filter(el => {
+            const text = readText(el);
+            return text.length > MIN_MESSAGE_CHARS;
+          });
+        }
+        
         return collect(
-          nodes.map((el) => ({
-            el,
-            role: el.getAttribute('data-message-author-role') === 'user' ? 'user' : 'assistant'
-          }))
+          nodes.map((el) => {
+            // Check data attribute first
+            const roleAttr = el.getAttribute('data-message-author-role');
+            if (roleAttr) {
+              return { el, role: roleAttr === 'user' ? 'user' : 'assistant' };
+            }
+            
+            // Fallback: detect role from content or position
+            // ChatGPT typically right-aligns or differently styles user messages
+            const classes = el.className || '';
+            const isUser = classes.includes('user') || 
+                          el.querySelector('[data-message-author-role="user"]') ||
+                          el.closest('[data-message-author-role="user"]');
+            return { el, role: isUser ? 'user' : 'assistant' };
+          })
         );
       },
       composer: () =>
-        firstEl(['#prompt-textarea', 'div[contenteditable="true"][id*="prompt"]', 'form textarea']),
+        firstEl([
+          '#prompt-textarea', 
+          'div[contenteditable="true"][id*="prompt"]',
+          'textarea[placeholder*="Message"]',
+          'textarea[data-id="root"]',
+          'form textarea',
+          'div[contenteditable="true"]'
+        ]),
       title: () =>
-        readText(document.querySelector('nav a[data-active], nav li[data-active] a')) ||
+        readText(document.querySelector('nav a[data-active], nav li[data-active] a, nav button[data-active]')) ||
         document.title.replace(/\s*[—|-]\s*ChatGPT\s*$/i, ''),
       threadKey: () => location.pathname.match(/\/c\/([\w-]+)/)?.[1] || location.pathname
     },
@@ -174,29 +217,96 @@
 
     gemini: {
       extract() {
+        // Try multiple selector strategies for Gemini's markup
         const pairs = orderedByRole({
-          user: ['user-query', '.query-text'],
-          assistant: ['model-response', 'message-content.model-response-text']
+          user: [
+            'user-query', 
+            '.query-text',
+            '[class*="user-query"]',
+            '[data-test-id*="user"]',
+            'message-content[role="user"]'
+          ],
+          assistant: [
+            'model-response',
+            'message-content.model-response-text',
+            '[class*="model-response"]',
+            '[data-test-id*="model"]',
+            'message-content[role="assistant"]',
+            '.response-container'
+          ]
         });
+        
+        // If ordered extraction fails, try a simpler approach
+        if (!pairs.length) {
+          const messages = Array.from(document.querySelectorAll('message-content, [class*="message"]')).filter(el => {
+            return readText(el).length > MIN_MESSAGE_CHARS;
+          });
+          return collect(messages.map((el, idx) => ({
+            el,
+            // Gemini typically alternates user/assistant
+            role: idx % 2 === 0 ? 'user' : 'assistant'
+          })));
+        }
+        
         return collect(pairs);
       },
       composer: () =>
-        firstEl(['rich-textarea div[contenteditable="true"]', 'div.ql-editor[contenteditable="true"]']),
+        firstEl([
+          'rich-textarea div[contenteditable="true"]',
+          'div.ql-editor[contenteditable="true"]',
+          '[data-placeholder] div[contenteditable="true"]',
+          'textarea[aria-label*="prompt"]',
+          'div[contenteditable="true"][role="textbox"]'
+        ]),
       title: () =>
-        readText(document.querySelector('.conversation.selected .conversation-title')) ||
+        readText(document.querySelector('.conversation.selected .conversation-title, [aria-label*="conversation"]')) ||
         document.title.replace(/\s*[—|-]\s*Gemini\s*$/i, ''),
       threadKey: () => location.pathname.match(/\/app\/([\w-]+)/)?.[1] || location.pathname
     },
 
     copilot: {
       extract() {
+        // Try multiple selector strategies for Copilot's markup
         const pairs = orderedByRole({
-          user: ['[data-content="user-message"]', '[data-testid="user-message"]'],
-          assistant: ['[data-content="ai-message"]', '[data-testid="ai-message"]']
+          user: [
+            '[data-content="user-message"]',
+            '[data-testid="user-message"]',
+            '[class*="user-message"]',
+            'cib-message-group[source="user"]',
+            '.user-message'
+          ],
+          assistant: [
+            '[data-content="ai-message"]',
+            '[data-testid="ai-message"]',
+            '[class*="bot-message"]',
+            'cib-message-group[source="bot"]',
+            '.bot-message'
+          ]
         });
+        
+        // Fallback: look for message groups
+        if (!pairs.length) {
+          const messages = Array.from(document.querySelectorAll('cib-message-group, [class*="message-group"]')).filter(el => {
+            return readText(el).length > MIN_MESSAGE_CHARS;
+          });
+          return collect(messages.map(el => {
+            const source = el.getAttribute('source');
+            const classes = el.className || '';
+            const isUser = source === 'user' || classes.includes('user');
+            return { el, role: isUser ? 'user' : 'assistant' };
+          }));
+        }
+        
         return collect(pairs);
       },
-      composer: () => firstEl(['#userInput', 'textarea[placeholder]', 'div[contenteditable="true"]']),
+      composer: () => firstEl([
+        '#userInput',
+        'textarea[placeholder*="Ask"]',
+        'textarea[id*="searchbox"]',
+        'cib-text-input textarea',
+        'textarea[placeholder]',
+        'div[contenteditable="true"]'
+      ]),
       title: () => document.title.replace(/\s*[—|-]\s*(Microsoft\s*)?Copilot\s*$/i, ''),
       threadKey: () => location.pathname + location.search
     },
@@ -268,20 +378,24 @@
     const current = currentAdapter();
     if (!current) return null;
     const { platform, adapter } = current;
+    const debug = localStorage.getItem('slipstream-debug') === 'true';
 
     let messages = [];
     let degraded = false;
     try {
       messages = adapter.extract() || [];
-    } catch {
+      if (debug) console.log('[Slipstream] Extracted messages:', messages.length);
+    } catch (err) {
+      if (debug) console.error('[Slipstream] Extract failed:', err);
       messages = [];
     }
     if (!messages.length) {
       messages = fallbackExtract();
       degraded = messages.length > 0;
+      if (debug && degraded) console.log('[Slipstream] Using fallback extract');
     }
 
-    return {
+    const result = {
       platform: platform.id,
       title: (adapter.title() || '').trim().slice(0, 120),
       url: location.href,
@@ -289,6 +403,9 @@
       messages,
       degraded
     };
+    
+    if (debug) console.log('[Slipstream] Capture result:', result);
+    return result;
   }
 
   root.SlipstreamAdapters = {
@@ -299,7 +416,49 @@
     readText,
     getComposer() {
       const current = currentAdapter();
-      return current ? current.adapter.composer() : null;
+      const debug = localStorage.getItem('slipstream-debug') === 'true';
+      
+      if (!current) {
+        if (debug) console.log('[Slipstream] No adapter for current platform');
+        return null;
+      }
+      
+      let composer = current.adapter.composer();
+      
+      // Ultra-fallback: try generic patterns if platform-specific selectors fail
+      if (!composer) {
+        if (debug) console.log('[Slipstream] Platform composer not found, trying generic fallbacks');
+        
+        // Try common textarea patterns
+        composer = firstEl([
+          'textarea[placeholder]',
+          'textarea:not([hidden]):not([disabled])',
+          'form textarea'
+        ]);
+        
+        // Try common contenteditable patterns
+        if (!composer) {
+          composer = firstEl([
+            'div[contenteditable="true"][role="textbox"]',
+            'div[contenteditable="true"]:not([aria-hidden="true"])',
+            '[contenteditable="true"]'
+          ]);
+        }
+        
+        // Try to find main input area by common form patterns
+        if (!composer) {
+          const mainForm = document.querySelector('form[action*="chat"], form[action*="message"], main form');
+          if (mainForm) {
+            composer = mainForm.querySelector('textarea, [contenteditable="true"]');
+            if (debug && composer) console.log('[Slipstream] Found composer in main form');
+          }
+        }
+        
+        if (debug && composer) console.log('[Slipstream] Found composer using generic fallback');
+      }
+      
+      if (debug && !composer) console.log('[Slipstream] No composer found at all');
+      return composer;
     }
   };
 })(window);
