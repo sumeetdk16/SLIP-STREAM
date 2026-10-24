@@ -13,6 +13,19 @@
     console.warn('[Slipstream] Extension context invalid. Please reload this page.');
     return;
   }
+  
+  // Periodically check if extension is still valid
+  const contextCheckInterval = setInterval(() => {
+    if (!chrome.runtime?.id) {
+      console.warn('[Slipstream] Extension was reloaded. Please refresh this page to restore functionality.');
+      clearInterval(contextCheckInterval);
+      // Hide widget to indicate extension needs reload
+      if (widget) {
+        widget.setVisible(false);
+        widget.notify('Extension reloaded - please refresh page', true);
+      }
+    }
+  }, 5000);
 
   const platform = slipstreamPlatformForHost(location.hostname);
   if (!platform) return;
@@ -46,26 +59,25 @@
     return new Promise((resolve, reject) => {
       // Check if extension context is still valid
       if (!chrome.runtime?.id) {
-        return reject(new Error('Extension context invalidated - please reload the page'));
+        console.warn('[Slipstream] Extension context invalid. Please reload this page.');
+        return reject(new Error('Extension context invalidated'));
       }
       
-      try {
-        chrome.runtime.sendMessage({ type, payload }, (res) => {
-          const lastError = chrome.runtime.lastError;
-          if (lastError) {
-            // Extension was reloaded
-            if (lastError.message?.includes('Extension context invalidated')) {
-              console.warn('[Slipstream] Extension was reloaded. Please refresh this page.');
-              return reject(new Error('Extension reloaded - please refresh the page'));
-            }
-            return reject(new Error(lastError.message));
+      chrome.runtime.sendMessage({ type, payload }, (res) => {
+        const lastError = chrome.runtime.lastError;
+        if (lastError) {
+          // Extension was reloaded - fail silently instead of showing error
+          if (lastError.message?.includes('Extension context invalidated') || 
+              lastError.message?.includes('message port closed') ||
+              lastError.message?.includes('receiving end does not exist')) {
+            console.warn('[Slipstream] Extension was reloaded. Please refresh this page.');
+            return reject(new Error('Extension reloaded'));
           }
-          if (!res?.ok) return reject(Object.assign(new Error(res?.error || 'Request failed'), { code: res?.code }));
-          resolve(res.data);
-        });
-      } catch (err) {
-        reject(new Error('Extension context invalidated - please reload the page'));
-      }
+          return reject(new Error(lastError.message));
+        }
+        if (!res?.ok) return reject(Object.assign(new Error(res?.error || 'Request failed'), { code: res?.code }));
+        resolve(res.data);
+      });
     });
   }
 
@@ -121,8 +133,10 @@
     }
     lastSignature = sig;
 
-    await send('CAPTURE_CONTEXT', { capture: { ...capture, auto: !manual } });
-    const contexts = await send('LIST_CONTEXTS');
+    await send('CAPTURE_CONTEXT', { capture: { ...capture, auto: !manual } }).catch(err => {
+      if (debug) console.log('[Slipstream] Failed to save capture:', err.message);
+    });
+    const contexts = await send('LIST_CONTEXTS').catch(() => []);
     widget?.setContexts(contexts);
     // The freshest capture of this thread is the one the user means.
     const mine = contexts.find((c) => c.threadKey === capture.threadKey);
