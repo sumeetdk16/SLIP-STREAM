@@ -218,12 +218,16 @@
   const adapters = {
     chatgpt: {
       extract() {
+        const debug = localStorage.getItem('slipstream-debug') === 'true';
+        
         // Try multiple selector strategies for ChatGPT's evolving markup
         let nodes = Array.from(document.querySelectorAll('[data-message-author-role]'));
+        if (debug) console.log('[Slipstream] ChatGPT: Found', nodes.length, 'nodes with [data-message-author-role]');
         
         // Fallback: look for message containers with role attributes
         if (!nodes.length) {
           nodes = Array.from(document.querySelectorAll('[data-testid*="conversation-turn"]'));
+          if (debug) console.log('[Slipstream] ChatGPT fallback: Found', nodes.length, 'nodes with [data-testid*="conversation-turn"]');
         }
         
         // Fallback: look for common message wrapper patterns
@@ -232,9 +236,10 @@
             const text = readText(el);
             return text.length > MIN_MESSAGE_CHARS;
           });
+          if (debug) console.log('[Slipstream] ChatGPT fallback 2: Found', nodes.length, 'group nodes');
         }
         
-        return collect(
+        const messages = collect(
           nodes.map((el) => {
             // Check data attribute first
             const roleAttr = el.getAttribute('data-message-author-role');
@@ -251,6 +256,9 @@
             return { el, role: isUser ? 'user' : 'assistant' };
           })
         );
+        
+        if (debug) console.log('[Slipstream] ChatGPT: Collected', messages.length, 'messages');
+        return messages;
       },
       composer: () =>
         firstEl([

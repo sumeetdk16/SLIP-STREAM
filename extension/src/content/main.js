@@ -31,7 +31,7 @@
    * typing (carets, virtualised lists, polling), so without a floor the
    * debounce alone would re-extract a long thread every few seconds forever.
    */
-  const MIN_AUTO_CAPTURE_GAP_MS = 10000;
+  const MIN_AUTO_CAPTURE_GAP_MS = 8000; // Reduced from 10s to 8s for faster updates
   const WIDGET_HOST_ID = 'slipstream-root';
 
   let widget = null;
@@ -79,19 +79,46 @@
   }
 
   async function captureNow({ manual = false } = {}) {
+    const debug = localStorage.getItem('slipstream-debug') === 'true';
+    
     if (!manual) {
-      if (document.hidden) return null;
-      if (Date.now() - lastAutoCaptureAt < MIN_AUTO_CAPTURE_GAP_MS) return null;
+      if (document.hidden) {
+        if (debug) console.log('[Slipstream] Skipping capture: document hidden');
+        return null;
+      }
+      const timeSinceLastCapture = Date.now() - lastAutoCaptureAt;
+      if (timeSinceLastCapture < MIN_AUTO_CAPTURE_GAP_MS) {
+        if (debug) console.log(`[Slipstream] Skipping capture: too soon (${timeSinceLastCapture}ms < ${MIN_AUTO_CAPTURE_GAP_MS}ms)`);
+        return null;
+      }
       lastAutoCaptureAt = Date.now();
     }
+    
+    if (debug) console.log('[Slipstream] Starting capture...', { manual, url: location.href });
     const capture = SlipstreamAdapters.capture();
-    if (!capture) return null;
+    if (!capture) {
+      if (debug) console.log('[Slipstream] No capture returned from adapter');
+      return null;
+    }
+    
+    if (debug) console.log('[Slipstream] Captured:', {
+      messages: capture.messages.length,
+      platform: capture.platform,
+      degraded: capture.degraded,
+      title: capture.title
+    });
 
     widget?.setCapture(capture);
-    if (!capture.messages.length) return null;
+    if (!capture.messages.length) {
+      if (debug) console.log('[Slipstream] No messages in capture');
+      return null;
+    }
 
     const sig = signature(capture);
-    if (!manual && sig === lastSignature) return null;
+    if (!manual && sig === lastSignature) {
+      if (debug) console.log('[Slipstream] Signature unchanged, skipping save');
+      return null;
+    }
     lastSignature = sig;
 
     await send('CAPTURE_CONTEXT', { capture: { ...capture, auto: !manual } });
@@ -100,6 +127,8 @@
     // The freshest capture of this thread is the one the user means.
     const mine = contexts.find((c) => c.threadKey === capture.threadKey);
     if (mine) widget?.setSelected(mine.id);
+    
+    if (debug) console.log('[Slipstream] Capture saved successfully');
     return capture;
   }
 
