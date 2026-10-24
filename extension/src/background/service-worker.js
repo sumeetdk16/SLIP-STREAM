@@ -169,6 +169,10 @@ async function storeContext(capture) {
   const threadKey = capture.threadKey || capture.url;
   const existingIdx = contexts.findIndex((c) => (c.threadKey || c.url) === threadKey);
 
+  // Count turns as user-assistant pairs, not individual messages
+  // A turn represents one complete exchange (user question + assistant response)
+  const turnCount = Math.ceil(capture.messages.length / 2);
+  
   const entry = {
     id: existingIdx >= 0 ? contexts[existingIdx].id : crypto.randomUUID(),
     platform: capture.platform,
@@ -177,6 +181,7 @@ async function storeContext(capture) {
     threadKey,
     messages: capture.messages,
     messageCount: capture.messages.length,
+    turnCount: turnCount,
     capturedAt: Date.now(),
     auto: !!capture.auto
   };

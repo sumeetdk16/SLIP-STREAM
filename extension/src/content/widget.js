@@ -612,16 +612,17 @@
       }
 
       const count = cap ? cap.messages.length : selected?.messageCount || 0;
+      const turnCount = cap ? Math.ceil(cap.messages.length / 2) : (selected?.turnCount || Math.ceil((selected?.messageCount || 0) / 2));
       const title = (cap?.title || selected?.title || 'Untitled thread').trim() || 'Untitled thread';
       const savedAt = selected?.capturedAt;
       // 30 turns is where a thread stops fitting comfortably in one handoff.
-      const fill = Math.min(100, Math.round((count / 30) * 100));
+      const fill = Math.min(100, Math.round((turnCount / 30) * 100));
 
       const stn = h('span', { class: 'stn', html: slipstreamLogo(platform.id, { size: 15 }) });
       stn.style.setProperty('--ss-tint', platform.color);
 
       const meta = h('div', { class: 'meta' }, [
-        h('span', { text: `${count} turn${count === 1 ? '' : 's'} · ${savedAt ? 'saved ' + timeAgo(savedAt) : 'not saved yet'}` })
+        h('span', { text: `${turnCount} turn${turnCount === 1 ? '' : 's'} · ${savedAt ? 'saved ' + timeAgo(savedAt) : 'not saved yet'}` })
       ]);
       if (cap?.degraded) meta.appendChild(h('span', { class: 'warn', text: ' · partial read' }));
 

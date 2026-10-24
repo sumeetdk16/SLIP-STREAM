@@ -44,6 +44,7 @@ const thread = (over = {}) => ({
   platform: 'claude',
   title: 'Rate limiting the upload endpoint',
   messageCount: 12,
+  turnCount: 6, // 12 messages = 6 turns (user-assistant pairs)
   capturedAt: Date.now() - 2 * 60 * 60 * 1000,
   ...over
 });
@@ -62,16 +63,16 @@ test('a saved thread carries its assistant mark, its length and a gauge', async 
   assert.ok(mark, 'no mark drawn for the saved thread');
   assert.equal(mark.getAttribute('d'), window.SLIPSTREAM_LOGO_PATHS.claude);
   assert.equal(row.style.getPropertyValue('--tint'), '#d97757', 'the row must carry the Claude hue');
-  assert.match(row.querySelector('.m').textContent, /^Claude · 12 turns$/);
+  assert.match(row.querySelector('.m').textContent, /^Claude · 6 turns$/);
   assert.equal(row.querySelector('.age').textContent, '2h ago');
 
-  // Gold measures: 12 of a comfortable 30 turns.
+  // Gold measures: 6 turns (12 messages / 2) of a comfortable 30 turns.
   const fill = row.querySelector('.gauge i').style.transform;
-  assert.equal(fill, 'scaleX(0.4)');
+  assert.equal(fill, 'scaleX(0.2)');
 });
 
 test('one turn is not pluralised, and a long thread pegs the gauge at full', async () => {
-  const { doc } = mountPopup({ contexts: [thread({ messageCount: 1 }), thread({ id: 'c2', messageCount: 90 })] });
+  const { doc } = mountPopup({ contexts: [thread({ messageCount: 1, turnCount: 1 }), thread({ id: 'c2', messageCount: 90, turnCount: 45 })] });
   await settle();
 
   const [first, second] = doc.querySelectorAll('.ctx');

@@ -80,11 +80,11 @@
         <span class="caret">${CARET}</span>`;
       head.querySelector('.t').textContent = ctx.title || 'Untitled thread';
       head.querySelector('.m').textContent =
-        `${source?.name || ctx.platform} · ${ctx.messageCount} turn${ctx.messageCount === 1 ? '' : 's'}`;
+        `${source?.name || ctx.platform} · ${ctx.turnCount || Math.ceil(ctx.messageCount / 2)} turn${(ctx.turnCount || Math.ceil(ctx.messageCount / 2)) === 1 ? '' : 's'}`;
       head.querySelector('.age').textContent = timeAgo(ctx.capturedAt);
       // Gold measures: the same thread-length gauge the widget shows, so a
       // thread that is getting long says so on whichever surface you open.
-      const fill = Math.min(1, ctx.messageCount / COMFORTABLE_TURNS);
+      const fill = Math.min(1, (ctx.turnCount || Math.ceil(ctx.messageCount / 2)) / COMFORTABLE_TURNS);
       head.querySelector('.gauge i').style.transform = `scaleX(${fill})`;
       head.addEventListener('click', () => {
         const open = card.classList.toggle('open');
