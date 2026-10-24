@@ -13,19 +13,6 @@
     console.warn('[Slipstream] Extension context invalid. Please reload this page.');
     return;
   }
-  
-  // Periodically check if extension is still valid
-  const contextCheckInterval = setInterval(() => {
-    if (!chrome.runtime?.id) {
-      console.warn('[Slipstream] Extension was reloaded. Please refresh this page to restore functionality.');
-      clearInterval(contextCheckInterval);
-      // Hide widget to indicate extension needs reload
-      if (widget) {
-        widget.setVisible(false);
-        widget.notify('Extension reloaded - please refresh page', true);
-      }
-    }
-  }, 5000);
 
   const platform = slipstreamPlatformForHost(location.hostname);
   if (!platform) return;
@@ -35,6 +22,34 @@
   }
   if (window.__slipstreamLoaded) return;
   window.__slipstreamLoaded = true;
+  
+  // Global handler for extension context errors - prevent uncaught rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason?.message?.includes('Extension context invalidated') ||
+        event.reason?.message?.includes('Extension reloaded') ||
+        event.reason?.message?.includes('message port closed') ||
+        event.reason?.message?.includes('receiving end does not exist')) {
+      event.preventDefault(); // Prevent error from showing in console
+      console.warn('[Slipstream] Extension context lost. Please refresh this page.');
+    }
+  });
+  
+  // Periodically check if extension is still valid
+  const contextCheckInterval = setInterval(() => {
+    if (!chrome.runtime?.id) {
+      console.warn('[Slipstream] Extension was reloaded. Please refresh this page to restore functionality.');
+      clearInterval(contextCheckInterval);
+      // Hide widget to indicate extension needs reload
+      if (widget) {
+        try {
+          widget.setVisible(false);
+          widget.notify('Extension reloaded - please refresh page', true);
+        } catch (e) {
+          // Widget might not be available
+        }
+      }
+    }
+  }, 5000);
 
   const AUTO_CAPTURE_DEBOUNCE_MS = 4000;
   const COMPOSER_WAIT_MS = 12000; // Increased to 12s for slow-loading pages like Gemini
