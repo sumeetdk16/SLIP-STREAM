@@ -336,67 +336,6 @@
       threadKey: () => location.pathname.match(/\/app\/([\w-]+)/)?.[1] || location.pathname
     },
 
-    copilot: {
-      extract() {
-        // Try multiple selector strategies for Copilot's markup
-        // Copilot has different layouts for chat vs search modes
-        const pairs = orderedByRole({
-          user: [
-            '[data-content="user-message"]',
-            '[data-testid="user-message"]',
-            '[class*="user-message"]',
-            'cib-message-group[source="user"]',
-            '.user-message',
-            'cib-message[type="user"]',
-            '[class*="request"]'
-          ],
-          assistant: [
-            '[data-content="ai-message"]',
-            '[data-testid="ai-message"]',
-            '[class*="bot-message"]',
-            'cib-message-group[source="bot"]',
-            '.bot-message',
-            'cib-message[type="bot"]',
-            '[class*="response"]',
-            '[class*="answer"]'
-          ]
-        });
-        
-        // Fallback: look for message groups
-        if (!pairs.length) {
-          const messages = Array.from(document.querySelectorAll('cib-message-group, cib-message, [class*="message-group"], [class*="turn-"]')).filter(el => {
-            return readText(el).length > MIN_MESSAGE_CHARS;
-          });
-          return collect(messages.map(el => {
-            const source = el.getAttribute('source') || el.getAttribute('type');
-            const classes = el.className || '';
-            const isUser = source === 'user' || classes.includes('user') || classes.includes('request');
-            return { el, role: isUser ? 'user' : 'assistant' };
-          }));
-        }
-        
-        return collect(pairs);
-      },
-      composer: () => firstEl([
-        '#userInput',
-        'textarea[placeholder*="Ask"]',
-        'textarea[id*="searchbox"]',
-        'cib-text-input textarea',
-        'textarea[placeholder*="me anything"]',
-        'textarea.textarea',
-        '[class*="input"] textarea',
-        'textarea[placeholder]',
-        'div[contenteditable="true"]',
-        '[contenteditable="true"][role="textbox"]'
-      ]),
-      title: () => document.title.replace(/\s*[—|-]\s*(Microsoft\s*)?Copilot\s*$/i, ''),
-      threadKey: () => {
-        // Extract conversation ID from URL if present
-        const match = location.search.match(/[?&](?:threadId|conversationId|id)=([^&]+)/);
-        return match ? `copilot-${match[1]}` : location.pathname + location.search;
-      }
-    },
-
     grok: {
       extract() {
         const bubbles = Array.from(
@@ -422,12 +361,19 @@
         return [];
       },
       composer: () => {
+        const debug = localStorage.getItem('slipstream-debug') === 'true';
+        
         // Try to find Grok's textarea with multiple strategies
+        // Priority order: most specific to most general
         const selectors = [
+          'textarea[placeholder*="explore"]',  // "What should we explore?"
           'textarea[placeholder*="Type"]',
           'textarea[placeholder*="slash"]',
           'textarea[placeholder*="use"]',
+          'textarea[aria-label*="ask"]',
+          'textarea[aria-label*="Grok"]',
           'textarea[aria-label]',
+          'textarea[placeholder]',
           'textarea[name]',
           'form textarea',
           'textarea:not([hidden]):not([disabled])',
@@ -439,19 +385,29 @@
         for (const sel of selectors) {
           const elements = document.querySelectorAll(sel);
           for (const el of elements) {
-            // Check if element is visible
-            if (el.offsetParent !== null || el.getBoundingClientRect().height > 0) {
+            // Check if element is visible and interactable
+            const rect = el.getBoundingClientRect();
+            const isVisible = el.offsetParent !== null || rect.height > 0;
+            const notHidden = !el.hidden && el.style.display !== 'none';
+            
+            if (isVisible && notHidden) {
+              if (debug) console.log('[Slipstream] Grok composer found with:', sel);
               return el;
             }
           }
         }
         
-        // Second pass: any textarea at all (even if hidden initially)
+        // Second pass: any textarea at all (even if initially hidden/loading)
         const anyTextarea = document.querySelector('textarea');
-        if (anyTextarea) return anyTextarea;
+        if (anyTextarea) {
+          if (debug) console.log('[Slipstream] Grok composer found (any textarea)');
+          return anyTextarea;
+        }
         
         // Last resort: contenteditable
-        return document.querySelector('div[contenteditable="true"]');
+        const contentEditable = document.querySelector('div[contenteditable="true"]');
+        if (contentEditable && debug) console.log('[Slipstream] Grok using contenteditable fallback');
+        return contentEditable;
       },
       title: () => document.title.replace(/\s*[—|-]\s*Grok\s*$/i, ''),
       threadKey: () => location.pathname

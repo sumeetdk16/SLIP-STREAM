@@ -19,11 +19,11 @@ test('every platform entry is complete', () => {
   }
 });
 
-test('the five headline platforms are all present', () => {
-  for (const id of ['chatgpt', 'claude', 'gemini', 'copilot', 'grok']) {
+test('the headline platforms are all present', () => {
+  for (const id of ['chatgpt', 'claude', 'gemini', 'grok']) {
     assert.ok(SLIPSTREAM_PLATFORMS[id], `missing ${id}`);
   }
-  assert.ok(SLIPSTREAM_PLATFORM_LIST.length >= 5);
+  assert.ok(SLIPSTREAM_PLATFORM_LIST.length >= 4);
 });
 
 test('hosts resolve to the right platform, including subdomains', () => {

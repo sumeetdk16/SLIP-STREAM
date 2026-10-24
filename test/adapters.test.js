@@ -33,15 +33,6 @@ const FIXTURES = {
     </main>`,
     expectedKey: 'gemini:55'
   },
-  copilot: {
-    url: 'https://copilot.microsoft.com/chats/1',
-    html: `<main>
-      <div data-content="user-message">Fix my regex</div>
-      <div data-content="ai-message">Escape the dot</div>
-      <textarea id="userInput"></textarea>
-    </main>`,
-    expectedKey: 'copilot:/chats/1'
-  },
   grok: {
     url: 'https://grok.com/chat/9',
     html: `<main>
@@ -117,7 +108,7 @@ test('an unsupported host produces no capture at all', () => {
 });
 
 test('writing to a textarea fires the input event frameworks listen for', () => {
-  const window = loadContentScripts(FIXTURES.copilot.html, { url: FIXTURES.copilot.url });
+  const window = loadContentScripts(FIXTURES.grok.html, { url: FIXTURES.grok.url });
   const composer = window.SlipstreamAdapters.getComposer();
   let events = 0;
   composer.addEventListener('input', () => events++);

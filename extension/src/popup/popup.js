@@ -53,7 +53,7 @@
       wrap.append(
         Object.assign(document.createElement('div'), {
           className: 'empty',
-          textContent: 'Open a chat on ChatGPT, Claude, Gemini, Copilot or Grok. Slipstream saves the thread here, ready to move.'
+          textContent: 'Open a chat on ChatGPT, Claude, Gemini, or Grok. Slipstream saves the thread here, ready to move.'
         })
       );
       return;

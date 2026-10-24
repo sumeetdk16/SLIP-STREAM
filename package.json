@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Slipstream \u2014 a Chrome extension that carries your conversation context across ChatGPT, Claude, Gemini, Copilot and Grok.",
+  "description": "Slipstream — a Chrome extension that carries your conversation context across ChatGPT, Claude, Gemini, and Grok.",
   "scripts": {
     "test": "node --test test/",
     "check": "node scripts/check.js",

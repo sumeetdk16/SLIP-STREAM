@@ -3,7 +3,7 @@
   "name": "Slipstream \u2014 AI Context Relay",
   "short_name": "Slipstream",
   "version": "1.0.0",
-  "description": "Carry your conversation context across ChatGPT, Claude, Gemini, Copilot and Grok. Detects usage limits and hands off in one click.",
+  "description": "Carry your conversation context across ChatGPT, Claude, Gemini, and Grok. Detects usage limits and hands off in one click.",
   "minimum_chrome_version": "114",
   "permissions": [
     "storage",
@@ -16,7 +16,6 @@
     "https://chat.openai.com/*",
     "https://claude.ai/*",
     "https://gemini.google.com/*",
-    "https://copilot.microsoft.com/*",
     "https://grok.com/*",
     "https://x.com/*",
     "https://www.perplexity.ai/*",
@@ -52,7 +51,6 @@
         "https://chat.openai.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://copilot.microsoft.com/*",
         "https://grok.com/*",
         "https://x.com/i/grok*",
         "https://www.perplexity.ai/*"
@@ -95,7 +93,6 @@
         "https://chat.openai.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://copilot.microsoft.com/*",
         "https://grok.com/*",
         "https://x.com/*",
         "https://www.perplexity.ai/*"

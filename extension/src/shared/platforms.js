@@ -59,22 +59,6 @@
         'daily limit reached'
       ]
     },
-    copilot: {
-      id: 'copilot',
-      name: 'Copilot',
-      vendor: 'Microsoft',
-      // Lifted from Copilot's brand blue: at #0a68c9 it was indistinguishable
-      // from the Gemini line wherever the two sit on the same map.
-      color: '#4cc2ff',
-      newChatUrl: 'https://copilot.microsoft.com/chats',
-      hosts: ['copilot.microsoft.com'],
-      limitPatterns: [
-        "you've reached your daily limit",
-        'daily chat limit',
-        'come back tomorrow for more',
-        'conversation limit reached'
-      ]
-    },
     grok: {
       id: 'grok',
       name: 'Grok',

@@ -102,7 +102,7 @@ if (composer) {
 
 ---
 
-### On Copilot (copilot.microsoft.com):
+### On ChatGPT, Claude, Gemini, or Grok:
 
 ```javascript
 // 1. Check what page we're on
@@ -137,7 +137,7 @@ const manualTextarea = document.querySelector('textarea');
 console.log('Manual textarea search:', manualTextarea);
 
 if (composer) {
-  SlipstreamAdapters.writeComposer(composer, 'COPILOT TEST');
+  SlipstreamAdapters.writeComposer(composer, 'TEST TEXT FOR DEBUG');
   setTimeout(() => {
     console.log('After write:', SlipstreamAdapters.readComposer(composer).length, 'chars');
   }, 500);
@@ -164,21 +164,9 @@ if (composer) {
 
 ## Send Me:
 
-**For Grok, copy/paste:**
-1. All textarea info (placeholder, id, className)
+**For Grok, Gemini, ChatGPT, or Claude:**
+1. All textarea/input info (placeholder, id, className)
 2. What `SlipstreamAdapters.getComposer()` returned
-3. Did "DEBUG TEST TEXT" appear in the input?
-
-**For Gemini, copy/paste:**
-1. Is `rich-textarea` found?
-2. Number of contenteditable elements
-3. What composer was found?
-4. Did test text appear?
-
-**For Copilot, copy/paste:**
-1. The URL you're on
-2. Has cib-serp or cib-conversation?
-3. All input elements found
-4. What composer was found?
+3. Did test text appear in the input?
 
 This will tell me exactly what selectors to use! 🎯

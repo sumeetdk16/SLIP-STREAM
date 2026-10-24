@@ -164,15 +164,12 @@
       if (platform.id === 'chatgpt') {
         checkInterval = 250;
         pageLoadWait = 800; // ChatGPT needs time to load composer
-      } else if (platform.id === 'copilot') {
-        checkInterval = 250;
-        pageLoadWait = 500;
       } else if (platform.id === 'gemini') {
         checkInterval = 300;
         pageLoadWait = 800;
       } else if (platform.id === 'grok') {
-        checkInterval = 200;
-        pageLoadWait = 600; // Grok needs time to load
+        checkInterval = 250;
+        pageLoadWait = 1200; // Grok needs more time - starts with landing page
       }
       
       const tick = () => {
@@ -196,22 +193,24 @@
           }
         }
         
-        // For Grok, check if page is ready
+        // For Grok, check if page is ready and interactive
         if (platform.id === 'grok') {
-          const hasContent = document.querySelector('main, [role="main"], textarea');
+          // Check if we're still on the landing page
+          const hasLandingText = document.body.textContent.includes('What should we explore');
+          const hasTextarea = document.querySelector('textarea');
+          
+          // If landing page but no textarea yet, keep waiting
+          if (hasLandingText && !hasTextarea && elapsed < 5000) {
+            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Grok textarea to appear...');
+            setTimeout(tick, 300);
+            return;
+          }
+          
+          // If still no main content and we're early, wait
+          const hasContent = document.querySelector('main, [role="main"], textarea, [placeholder]');
           if (!hasContent && elapsed < 3000) {
             if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Grok to load...');
             setTimeout(tick, 250);
-            return;
-          }
-        }
-        
-        // For Copilot/Gemini, also check if we're in chat mode
-        if (platform.id === 'copilot') {
-          const inChatMode = document.querySelector('cib-serp, cib-conversation, [class*="conversation"], cib-chat, #b_sydConvCont');
-          if (!inChatMode && elapsed < 4000) {
-            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Copilot chat mode...');
-            setTimeout(tick, 350);
             return;
           }
         }
@@ -262,7 +261,7 @@
     }
     
     // Reduced delays - faster paste
-    const delay = platform.id === 'copilot' ? 300 : 150; // Much shorter delays
+    const delay = 150;
     await new Promise(resolve => setTimeout(resolve, delay));
     
     // Focus the composer first to ensure it's ready
