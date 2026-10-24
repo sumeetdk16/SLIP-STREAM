@@ -363,50 +363,52 @@
       composer: () => {
         const debug = localStorage.getItem('slipstream-debug') === 'true';
         
-        // Try to find Grok's textarea with multiple strategies
-        // Priority order: most specific to most general
+        // Grok's actual textarea selectors - updated for real interface
         const selectors = [
-          'textarea[placeholder*="explore"]',  // "What should we explore?"
+          // Most specific first
+          'textarea[placeholder*="Ask"]',
+          'textarea[placeholder*="Message"]',
           'textarea[placeholder*="Type"]',
-          'textarea[placeholder*="slash"]',
-          'textarea[placeholder*="use"]',
-          'textarea[aria-label*="ask"]',
-          'textarea[aria-label*="Grok"]',
-          'textarea[aria-label]',
+          'textarea[data-testid]',
+          'textarea[class*="input"]',
+          'textarea[class*="composer"]',
           'textarea[placeholder]',
-          'textarea[name]',
+          'textarea[aria-label]',
           'form textarea',
           'textarea:not([hidden]):not([disabled])',
+          '[contenteditable="true"][role="textbox"]',
           'textarea',
           'div[contenteditable="true"]'
         ];
+        
+        if (debug) console.log('[Slipstream] Searching for Grok composer...');
         
         // First pass: look for visible textareas
         for (const sel of selectors) {
           const elements = document.querySelectorAll(sel);
           for (const el of elements) {
-            // Check if element is visible and interactable
             const rect = el.getBoundingClientRect();
-            const isVisible = el.offsetParent !== null || rect.height > 0;
-            const notHidden = !el.hidden && el.style.display !== 'none';
+            const isVisible = el.offsetParent !== null || (rect.height > 0 && rect.width > 0);
+            const notHidden = !el.hidden && el.style.display !== 'none' && el.style.visibility !== 'hidden';
             
             if (isVisible && notHidden) {
-              if (debug) console.log('[Slipstream] Grok composer found with:', sel);
+              if (debug) console.log('[Slipstream] Grok composer found:', sel, el);
               return el;
             }
           }
         }
         
-        // Second pass: any textarea at all (even if initially hidden/loading)
+        // Second pass: any textarea
         const anyTextarea = document.querySelector('textarea');
         if (anyTextarea) {
-          if (debug) console.log('[Slipstream] Grok composer found (any textarea)');
+          if (debug) console.log('[Slipstream] Grok found any textarea');
           return anyTextarea;
         }
         
         // Last resort: contenteditable
         const contentEditable = document.querySelector('div[contenteditable="true"]');
-        if (contentEditable && debug) console.log('[Slipstream] Grok using contenteditable fallback');
+        if (debug && contentEditable) console.log('[Slipstream] Grok using contenteditable');
+        if (debug && !contentEditable) console.log('[Slipstream] Grok composer NOT FOUND');
         return contentEditable;
       },
       title: () => document.title.replace(/\s*[—|-]\s*Grok\s*$/i, ''),

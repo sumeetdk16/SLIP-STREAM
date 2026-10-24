@@ -64,7 +64,7 @@
       name: 'Grok',
       vendor: 'xAI',
       color: '#9aa3af',
-      newChatUrl: 'https://grok.com/',
+      newChatUrl: 'https://grok.com/chat',
       hosts: ['grok.com', 'x.com'],
       limitPatterns: [
         "you've reached your limit of grok",

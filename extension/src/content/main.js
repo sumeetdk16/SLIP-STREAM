@@ -168,8 +168,8 @@
         checkInterval = 300;
         pageLoadWait = 800;
       } else if (platform.id === 'grok') {
-        checkInterval = 250;
-        pageLoadWait = 1200; // Grok needs more time - starts with landing page
+        checkInterval = 300;
+        pageLoadWait = 1500; // Grok /chat page needs time to load textarea
       }
       
       const tick = () => {
@@ -193,25 +193,34 @@
           }
         }
         
-        // For Grok, check if page is ready and interactive
+        // For Grok, check if page is ready and has textarea
         if (platform.id === 'grok') {
-          // Check if we're still on the landing page
-          const hasLandingText = document.body.textContent.includes('What should we explore');
+          // Wait for chat interface to be ready
           const hasTextarea = document.querySelector('textarea');
+          const hasForm = document.querySelector('form');
+          const hasMain = document.querySelector('main');
           
-          // If landing page but no textarea yet, keep waiting
-          if (hasLandingText && !hasTextarea && elapsed < 5000) {
-            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Grok textarea to appear...');
+          // If no textarea yet and we're early, keep waiting
+          if (!hasTextarea && elapsed < 8000) {
+            if (debug && attempts % 10 === 0) {
+              console.log('[Slipstream] Grok: Waiting for textarea...', {
+                elapsed,
+                hasForm,
+                hasMain,
+                textareaCount: document.querySelectorAll('textarea').length
+              });
+            }
             setTimeout(tick, 300);
             return;
           }
           
-          // If still no main content and we're early, wait
-          const hasContent = document.querySelector('main, [role="main"], textarea, [placeholder]');
-          if (!hasContent && elapsed < 3000) {
-            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Grok to load...');
-            setTimeout(tick, 250);
-            return;
+          // Log if we still don't have textarea after extended wait
+          if (!hasTextarea && elapsed >= 8000 && debug) {
+            console.log('[Slipstream] Grok: No textarea after 8s', {
+              url: location.href,
+              hasForm,
+              hasMain
+            });
           }
         }
         
