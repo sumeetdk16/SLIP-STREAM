@@ -25,12 +25,17 @@
   
   // Global handler for extension context errors - prevent uncaught rejections
   window.addEventListener('unhandledrejection', (event) => {
-    if (event.reason?.message?.includes('Extension context invalidated') ||
-        event.reason?.message?.includes('Extension reloaded') ||
-        event.reason?.message?.includes('message port closed') ||
-        event.reason?.message?.includes('receiving end does not exist')) {
-      event.preventDefault(); // Prevent error from showing in console
-      console.warn('[Slipstream] Extension context lost. Please refresh this page.');
+    const message = event.reason?.message || '';
+    if (message.includes('Extension context invalidated') ||
+        message.includes('Extension reloaded') ||
+        message.includes('message port closed') ||
+        message.includes('receiving end does not exist')) {
+      // Prevent the error from appearing in console
+      event.preventDefault();
+      event.stopPropagation();
+      // Silent warning instead of error
+      console.debug('[Slipstream] Extension context lost. Refresh page to restore.');
+      return false;
     }
   });
   
@@ -65,19 +70,18 @@
     return new Promise((resolve, reject) => {
       // Check if extension context is still valid
       if (!chrome.runtime?.id) {
-        console.warn('[Slipstream] Extension context invalid. Please reload this page.');
-        return reject(new Error('Extension context invalidated'));
+        // Silently fail - don't log to avoid extension error page
+        return resolve({ ok: false, data: null }); // Return success with no data instead of rejecting
       }
       
       chrome.runtime.sendMessage({ type, payload }, (res) => {
         const lastError = chrome.runtime.lastError;
         if (lastError) {
-          // Extension was reloaded - fail silently instead of showing error
+          // Extension was reloaded - return empty result instead of rejecting
           if (lastError.message?.includes('Extension context invalidated') || 
               lastError.message?.includes('message port closed') ||
               lastError.message?.includes('receiving end does not exist')) {
-            console.warn('[Slipstream] Extension was reloaded. Please refresh this page.');
-            return reject(new Error('Extension reloaded'));
+            return resolve({ ok: false, data: null }); // Don't reject, just return empty
           }
           return reject(new Error(lastError.message));
         }
