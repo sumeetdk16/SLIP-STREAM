@@ -8,6 +8,12 @@
 (function () {
   'use strict';
 
+  // Early exit if extension context is invalid (extension was reloaded)
+  if (!chrome.runtime?.id) {
+    console.warn('[Slipstream] Extension context invalid. Please reload this page.');
+    return;
+  }
+
   const platform = slipstreamPlatformForHost(location.hostname);
   if (!platform) return;
   // x.com hosts far more than Grok; only run inside the Grok surface.
@@ -18,7 +24,7 @@
   window.__slipstreamLoaded = true;
 
   const AUTO_CAPTURE_DEBOUNCE_MS = 4000;
-  const COMPOSER_WAIT_MS = 8000; // Reduced from 20s to 8s
+  const COMPOSER_WAIT_MS = 12000; // Increased to 12s for slow-loading pages like Gemini
   /**
    * Extraction walks and clones every message in the thread, so an automatic
    * capture is never cheap. These pages mutate constantly even when nobody is
@@ -38,12 +44,28 @@
 
   function send(type, payload = {}) {
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ type, payload }, (res) => {
-        const lastError = chrome.runtime.lastError;
-        if (lastError) return reject(new Error(lastError.message));
-        if (!res?.ok) return reject(Object.assign(new Error(res?.error || 'Request failed'), { code: res?.code }));
-        resolve(res.data);
-      });
+      // Check if extension context is still valid
+      if (!chrome.runtime?.id) {
+        return reject(new Error('Extension context invalidated - please reload the page'));
+      }
+      
+      try {
+        chrome.runtime.sendMessage({ type, payload }, (res) => {
+          const lastError = chrome.runtime.lastError;
+          if (lastError) {
+            // Extension was reloaded
+            if (lastError.message?.includes('Extension context invalidated')) {
+              console.warn('[Slipstream] Extension was reloaded. Please refresh this page.');
+              return reject(new Error('Extension reloaded - please refresh the page'));
+            }
+            return reject(new Error(lastError.message));
+          }
+          if (!res?.ok) return reject(Object.assign(new Error(res?.error || 'Request failed'), { code: res?.code }));
+          resolve(res.data);
+        });
+      } catch (err) {
+        reject(new Error('Extension context invalidated - please reload the page'));
+      }
     });
   }
 
@@ -135,28 +157,81 @@
       const debug = localStorage.getItem('slipstream-debug') === 'true';
       let attempts = 0;
       
-      // More aggressive checking - reduced interval
-      const checkInterval = platform.id === 'copilot' ? 250 : 200; // Faster polling
+      // Platform-specific intervals and waits
+      let checkInterval = 200;
+      let pageLoadWait = 0;
+      
+      if (platform.id === 'chatgpt') {
+        checkInterval = 250;
+        pageLoadWait = 800; // ChatGPT needs time to load composer
+      } else if (platform.id === 'copilot') {
+        checkInterval = 250;
+        pageLoadWait = 500;
+      } else if (platform.id === 'gemini') {
+        checkInterval = 300;
+        pageLoadWait = 800;
+      } else if (platform.id === 'grok') {
+        checkInterval = 200;
+        pageLoadWait = 600; // Grok needs time to load
+      }
       
       const tick = () => {
         attempts++;
+        const elapsed = Date.now() - started;
         
-        // For Copilot, also check if we're in chat mode by looking for conversation elements
-        if (platform.id === 'copilot') {
-          const inChatMode = document.querySelector('cib-serp, cib-conversation, [class*="conversation"], cib-chat');
-          if (!inChatMode && Date.now() - started < 3000) { // Only wait 3s for chat mode
-            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Copilot chat mode...');
+        // Give the page initial time to load before checking
+        if (elapsed < pageLoadWait) {
+          setTimeout(tick, checkInterval);
+          return;
+        }
+        
+        // For ChatGPT, check if page is interactive
+        if (platform.id === 'chatgpt') {
+          const hasMain = document.querySelector('main');
+          const hasForm = document.querySelector('form');
+          if (!hasMain && !hasForm && elapsed < 3000) {
+            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for ChatGPT to load...');
             setTimeout(tick, 300);
+            return;
+          }
+        }
+        
+        // For Grok, check if page is ready
+        if (platform.id === 'grok') {
+          const hasContent = document.querySelector('main, [role="main"], textarea');
+          if (!hasContent && elapsed < 3000) {
+            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Grok to load...');
+            setTimeout(tick, 250);
+            return;
+          }
+        }
+        
+        // For Copilot/Gemini, also check if we're in chat mode
+        if (platform.id === 'copilot') {
+          const inChatMode = document.querySelector('cib-serp, cib-conversation, [class*="conversation"], cib-chat, #b_sydConvCont');
+          if (!inChatMode && elapsed < 4000) {
+            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Copilot chat mode...');
+            setTimeout(tick, 350);
+            return;
+          }
+        }
+        
+        if (platform.id === 'gemini') {
+          // Check if still on landing page
+          const onLanding = document.querySelector('[href*="chat"]') && !document.querySelector('rich-textarea, [contenteditable]');
+          if (onLanding && elapsed < 5000) {
+            if (debug && attempts % 5 === 0) console.log('[Slipstream] Waiting for Gemini app to load...');
+            setTimeout(tick, 400);
             return;
           }
         }
         
         const el = SlipstreamAdapters.getComposer();
         if (el) {
-          if (debug) console.log(`[Slipstream] Composer found after ${attempts} attempts (${Date.now() - started}ms)`);
+          if (debug) console.log(`[Slipstream] Composer found after ${attempts} attempts (${elapsed}ms)`);
           return resolve(el);
         }
-        if (Date.now() - started > timeout) {
+        if (elapsed > timeout) {
           if (debug) console.log(`[Slipstream] Composer timeout after ${attempts} attempts`);
           return resolve(null);
         }

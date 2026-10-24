@@ -260,15 +260,8 @@ async function openTarget(targetPlatformId) {
   const target = SLIPSTREAM_PLATFORMS[targetPlatformId];
   if (!target) throw new Error('Unknown destination.');
 
-  // Reuse an existing tab on that platform when there is one — opening a
-  // seventh ChatGPT tab is not a feature.
-  const tabs = await chrome.tabs.query({ url: target.hosts.map((h) => `https://${h}/*`) });
-  const existing = tabs.find((t) => !t.discarded);
-  if (existing) {
-    await chrome.tabs.update(existing.id, { active: true, url: target.newChatUrl });
-    await chrome.windows.update(existing.windowId, { focused: true });
-    return { tabId: existing.id, reused: true };
-  }
+  // Always create a NEW tab for handoffs
+  // Reusing tabs causes content script conflicts
   const tab = await chrome.tabs.create({ url: target.newChatUrl, active: true });
   return { tabId: tab.id, reused: false };
 }

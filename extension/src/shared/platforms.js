@@ -19,7 +19,7 @@
       name: 'ChatGPT',
       vendor: 'OpenAI',
       color: '#10a37f',
-      newChatUrl: 'https://chatgpt.com/',
+      newChatUrl: 'https://chatgpt.com/?model=auto',
       hosts: ['chatgpt.com', 'chat.openai.com'],
       limitPatterns: [
         "you've reached the current usage cap",
@@ -50,7 +50,7 @@
       name: 'Gemini',
       vendor: 'Google',
       color: '#4285f4',
-      newChatUrl: 'https://gemini.google.com/app',
+      newChatUrl: 'https://gemini.google.com/app?hl=en',
       hosts: ['gemini.google.com'],
       limitPatterns: [
         "you've reached your limit",
@@ -66,7 +66,7 @@
       // Lifted from Copilot's brand blue: at #0a68c9 it was indistinguishable
       // from the Gemini line wherever the two sit on the same map.
       color: '#4cc2ff',
-      newChatUrl: 'https://copilot.microsoft.com/?showconv=1',
+      newChatUrl: 'https://copilot.microsoft.com/chats',
       hosts: ['copilot.microsoft.com'],
       limitPatterns: [
         "you've reached your daily limit",

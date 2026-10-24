@@ -49,59 +49,131 @@
   }
 
   function setNativeValue(el, value) {
+    const debug = localStorage.getItem('slipstream-debug') === 'true';
     const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement : HTMLInputElement;
     const setter = Object.getOwnPropertyDescriptor(proto.prototype, 'value')?.set;
-    setter ? setter.call(el, value) : (el.value = value);
+    
+    // Set value using native setter
+    if (setter) {
+      setter.call(el, value);
+    } else {
+      el.value = value;
+    }
+    
+    // Focus the element
+    el.focus();
+    
+    // Fire all events that frameworks might listen to
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('keydown', { bubbles: true }));
+    el.dispatchEvent(new Event('keyup', { bubbles: true }));
+    
+    if (debug) console.log('[Slipstream] setNativeValue: Set', value.length, 'chars to', el.tagName);
   }
 
   /**
-   * Rich composers (ProseMirror, Lexical, Quill) only trust real editing
-   * events. execCommand('insertText') is deprecated but remains the one path
-   * every one of them observes; the beforeinput dispatch is the backup.
+   * Rich composers (ProseMirror, Lexical, Quill) need special handling.
+   * We try multiple strategies synchronously and asynchronously.
    */
   function setRichText(el, text) {
+    const debug = localStorage.getItem('slipstream-debug') === 'true';
+    
     el.focus();
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    selection.removeAllRanges();
-    selection.addRange(range);
-
-    let ok = false;
+    
+    // Clear existing content first
+    el.textContent = '';
+    
+    // Strategy 1: Use execCommand if available (works for many editors)
+    let success = false;
     try {
-      ok = document.execCommand('insertText', false, text);
-    } catch {
-      ok = false;
+      success = document.execCommand('insertText', false, text);
+      if (debug && success) console.log('[Slipstream] execCommand succeeded');
+    } catch (e) {
+      if (debug) console.log('[Slipstream] execCommand not available');
     }
-    if (!ok) {
-      try {
-        const dt = new DataTransfer();
-        dt.setData('text/plain', text);
-        el.dispatchEvent(
-          new InputEvent('beforeinput', {
-            bubbles: true,
-            cancelable: true,
-            inputType: 'insertFromPaste',
-            dataTransfer: dt
-          })
-        );
-      } catch {
-        // No DataTransfer here; the direct write below is the remaining path.
-      }
-      if (readText(el) !== text) {
-        el.textContent = text;
-        el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-      }
+    
+    // Strategy 2: Set textContent + fire events
+    if (!success) {
+      el.textContent = text;
+      
+      // Fire input events that React/Vue/modern frameworks listen to
+      el.dispatchEvent(new InputEvent('beforeinput', { 
+        bubbles: true, 
+        cancelable: true,
+        inputType: 'insertText',
+        data: text
+      }));
+      
+      el.dispatchEvent(new InputEvent('input', { 
+        bubbles: true, 
+        inputType: 'insertText', 
+        data: text 
+      }));
+      
+      if (debug) console.log('[Slipstream] Direct textContent + events');
     }
+    
+    // Always fire change event
     el.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    // Skip cursor positioning - it's causing errors and isn't critical for paste functionality
+    // The text will be pasted successfully even without setting cursor position
   }
 
   function writeComposer(el, text) {
     if (!el) return false;
-    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') setNativeValue(el, text);
-    else setRichText(el, text);
+    const debug = localStorage.getItem('slipstream-debug') === 'true';
+    
+    if (debug) console.log('[Slipstream] writeComposer called:', el.tagName, el.id || el.className);
+    
+    // For TEXTAREA and INPUT elements
+    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+      setNativeValue(el, text);
+      
+      // Verify immediately for textareas
+      setTimeout(() => {
+        const check = readComposer(el);
+        if (debug) console.log('[Slipstream] Textarea write verification:', check.length, 'chars');
+      }, 100);
+    } 
+    // For contenteditable (ChatGPT, Gemini, Claude, etc.)
+    else {
+      // Try multiple strategies for contenteditable
+      setRichText(el, text);
+      
+      // Verify after a delay
+      setTimeout(() => {
+        const check = readComposer(el);
+        if (debug) console.log('[Slipstream] Write verification:', check.length, 'chars written');
+        
+        // If it didn't work, try more aggressive approaches
+        if (check.length === 0 && text.length > 0) {
+          if (debug) console.log('[Slipstream] Retry: text did not stick, trying aggressive fallback');
+          
+          // Fallback 1: Direct innerHTML with <p> tags (works for some editors)
+          try {
+            el.innerHTML = `<p>${text.replace(/\n/g, '</p><p>')}</p>`;
+            el.dispatchEvent(new InputEvent('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            if (debug) console.log('[Slipstream] Tried innerHTML with <p> tags');
+          } catch (e) {
+            if (debug) console.log('[Slipstream] innerHTML failed:', e.message);
+          }
+          
+          // Fallback 2: Just plain text, no formatting
+          setTimeout(() => {
+            const check2 = readComposer(el);
+            if (check2.length === 0) {
+              el.textContent = text;
+              el.dispatchEvent(new InputEvent('input', { bubbles: true }));
+              if (debug) console.log('[Slipstream] Tried plain textContent fallback');
+            }
+          }, 200);
+        }
+      }, 300);
+    }
+    
     el.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
     return true;
   }
@@ -349,8 +421,38 @@
         }
         return [];
       },
-      composer: () =>
-        firstEl(['textarea[aria-label]', 'form textarea', 'div[contenteditable="true"]']),
+      composer: () => {
+        // Try to find Grok's textarea with multiple strategies
+        const selectors = [
+          'textarea[placeholder*="Type"]',
+          'textarea[placeholder*="slash"]',
+          'textarea[placeholder*="use"]',
+          'textarea[aria-label]',
+          'textarea[name]',
+          'form textarea',
+          'textarea:not([hidden]):not([disabled])',
+          'textarea',
+          'div[contenteditable="true"]'
+        ];
+        
+        // First pass: look for visible textareas
+        for (const sel of selectors) {
+          const elements = document.querySelectorAll(sel);
+          for (const el of elements) {
+            // Check if element is visible
+            if (el.offsetParent !== null || el.getBoundingClientRect().height > 0) {
+              return el;
+            }
+          }
+        }
+        
+        // Second pass: any textarea at all (even if hidden initially)
+        const anyTextarea = document.querySelector('textarea');
+        if (anyTextarea) return anyTextarea;
+        
+        // Last resort: contenteditable
+        return document.querySelector('div[contenteditable="true"]');
+      },
       title: () => document.title.replace(/\s*[—|-]\s*Grok\s*$/i, ''),
       threadKey: () => location.pathname
     },
@@ -437,42 +539,51 @@
         return null;
       }
       
+      // Get composer from platform adapter
       let composer = current.adapter.composer();
       
-      // Ultra-fallback: try generic patterns if platform-specific selectors fail
-      if (!composer) {
-        if (debug) console.log('[Slipstream] Platform composer not found, trying generic fallbacks');
-        
-        // Try common textarea patterns
-        composer = firstEl([
-          'textarea[placeholder]',
-          'textarea:not([hidden]):not([disabled])',
-          'form textarea'
-        ]);
-        
-        // Try common contenteditable patterns
-        if (!composer) {
-          composer = firstEl([
-            'div[contenteditable="true"][role="textbox"]',
-            'div[contenteditable="true"]:not([aria-hidden="true"])',
-            '[contenteditable="true"]'
-          ]);
-        }
-        
-        // Try to find main input area by common form patterns
-        if (!composer) {
-          const mainForm = document.querySelector('form[action*="chat"], form[action*="message"], main form');
-          if (mainForm) {
-            composer = mainForm.querySelector('textarea, [contenteditable="true"]');
-            if (debug && composer) console.log('[Slipstream] Found composer in main form');
-          }
-        }
-        
-        if (debug && composer) console.log('[Slipstream] Found composer using generic fallback');
+      if (composer) {
+        if (debug) console.log('[Slipstream] Platform adapter found composer:', composer.tagName, composer.id || composer.className);
+        return composer;
       }
       
-      if (debug && !composer) console.log('[Slipstream] No composer found at all');
-      return composer;
+      // Only try ultra-fallback if platform adapter returned null
+      if (debug) console.log('[Slipstream] Platform composer not found, trying generic fallbacks');
+      
+      // Try common textarea patterns
+      composer = firstEl([
+        'textarea[placeholder]',
+        'textarea:not([hidden]):not([disabled])',
+        'form textarea'
+      ]);
+      
+      if (composer) {
+        if (debug) console.log('[Slipstream] Found composer using generic textarea fallback');
+        return composer;
+      }
+      
+      // Try common contenteditable patterns
+      composer = firstEl([
+        'div[contenteditable="true"][role="textbox"]',
+        'div[contenteditable="true"]:not([aria-hidden="true"])',
+        '[contenteditable="true"]'
+      ]);
+      
+      if (composer) {
+        if (debug) console.log('[Slipstream] Found composer using contenteditable fallback');
+        return composer;
+      }
+      
+      // Try to find main input area by common form patterns
+      const mainForm = document.querySelector('form[action*="chat"], form[action*="message"], main form');
+      if (mainForm) {
+        composer = mainForm.querySelector('textarea, [contenteditable="true"]');
+        if (debug && composer) console.log('[Slipstream] Found composer in main form');
+        if (composer) return composer;
+      }
+      
+      if (debug) console.log('[Slipstream] No composer found at all');
+      return null;
     }
   };
 })(window);
