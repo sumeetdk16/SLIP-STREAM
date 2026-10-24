@@ -170,27 +170,28 @@ async function storeContext(capture) {
   const existingIdx = contexts.findIndex((c) => (c.threadKey || c.url) === threadKey);
 
   // Count actual conversation turns by looking at role transitions
-  // A turn is counted when we see a transition from one role to another
-  // This handles cases where multiple messages come from the same role
+  // A turn = one user-assistant exchange (one back-and-forth)
   function countTurns(messages) {
     if (!messages || messages.length === 0) return 0;
     if (messages.length === 1) return 1;
     
-    let turns = 1; // First message is always part of turn 1
+    // Count role transitions (switches between user and assistant)
+    let transitions = 0;
     let lastRole = messages[0].role;
     
     for (let i = 1; i < messages.length; i++) {
       const currentRole = messages[i].role;
-      // Count a new turn when role changes
       if (currentRole !== lastRole) {
-        turns++;
+        transitions++;
         lastRole = currentRole;
       }
     }
     
-    // Since we count role transitions, divide by 2 and round up
-    // to get actual back-and-forth turns
-    return Math.ceil(turns / 2);
+    // Each role transition represents moving forward in the conversation
+    // transitions + 1 = number of "blocks" of consecutive same-role messages
+    // For turn counting: we want user-assistant pairs
+    // So: (transitions + 1) gives us message blocks, divide by 2 for pairs
+    return Math.ceil((transitions + 1) / 2);
   }
   
   const turnCount = countTurns(capture.messages);

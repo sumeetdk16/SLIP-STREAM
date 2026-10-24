@@ -618,17 +618,19 @@
         if (!messages || messages.length === 0) return 0;
         if (messages.length === 1) return 1;
         
-        let turns = 1;
+        let transitions = 0;
         let lastRole = messages[0].role;
         
         for (let i = 1; i < messages.length; i++) {
           if (messages[i].role !== lastRole) {
-            turns++;
+            transitions++;
             lastRole = messages[i].role;
           }
         }
         
-        return Math.ceil(turns / 2);
+        // transitions + 1 = number of message blocks
+        // Divide by 2 to get user-assistant pairs (turns)
+        return Math.ceil((transitions + 1) / 2);
       };
       
       const turnCount = cap ? calculateTurns(cap.messages) : (selected?.turnCount || Math.ceil((selected?.messageCount || 0) / 2));
