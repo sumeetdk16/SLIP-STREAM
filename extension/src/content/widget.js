@@ -612,7 +612,26 @@
       }
 
       const count = cap ? cap.messages.length : selected?.messageCount || 0;
-      const turnCount = cap ? Math.ceil(cap.messages.length / 2) : (selected?.turnCount || Math.ceil((selected?.messageCount || 0) / 2));
+      
+      // Count turns by role transitions (more accurate than simple division)
+      const calculateTurns = (messages) => {
+        if (!messages || messages.length === 0) return 0;
+        if (messages.length === 1) return 1;
+        
+        let turns = 1;
+        let lastRole = messages[0].role;
+        
+        for (let i = 1; i < messages.length; i++) {
+          if (messages[i].role !== lastRole) {
+            turns++;
+            lastRole = messages[i].role;
+          }
+        }
+        
+        return Math.ceil(turns / 2);
+      };
+      
+      const turnCount = cap ? calculateTurns(cap.messages) : (selected?.turnCount || Math.ceil((selected?.messageCount || 0) / 2));
       const title = (cap?.title || selected?.title || 'Untitled thread').trim() || 'Untitled thread';
       const savedAt = selected?.capturedAt;
       // 30 turns is where a thread stops fitting comfortably in one handoff.
