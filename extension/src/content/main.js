@@ -39,15 +39,6 @@
     if (!chrome.runtime?.id) {
       console.warn('[Slipstream] Extension was reloaded. Please refresh this page to restore functionality.');
       clearInterval(contextCheckInterval);
-      // Hide widget to indicate extension needs reload
-      if (widget) {
-        try {
-          widget.setVisible(false);
-          widget.notify('Extension reloaded - please refresh page', true);
-        } catch (e) {
-          // Widget might not be available
-        }
-      }
     }
   }, 5000);
 
