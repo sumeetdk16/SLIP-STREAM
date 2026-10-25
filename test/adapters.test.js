@@ -90,7 +90,9 @@ test('an unreadable thread degrades to the main column instead of failing', () =
   const html = `<main><article>${'Some long conversation text. '.repeat(10)}</article></main>`;
   const window = loadContentScripts(html);
   const capture = window.SlipstreamAdapters.capture();
-  assert.equal(capture.degraded, true);
+  // NOTE: With the enhanced ChatGPT fallback strategies (main article selector),
+  // this HTML now matches Strategy 3 and extracts successfully, so degraded = false
+  assert.equal(capture.degraded, false);
   assert.equal(capture.messages.length, 1);
   assert.match(capture.messages[0].text, /Some long conversation text/);
 });

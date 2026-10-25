@@ -189,12 +189,19 @@
 
   function collect(pairs) {
     const out = [];
+    const seen = new Set(); // Track unique (role, text) combinations
+    
     for (const { el, role } of pairs) {
       const text = readText(el);
       if (text.length < MIN_MESSAGE_CHARS) continue;
-      // Streaming re-renders can duplicate the final node; collapse repeats.
-      const last = out[out.length - 1];
-      if (last && last.role === role && last.text === text) continue;
+      
+      // Create unique key for deduplication
+      const key = `${role}:${text}`;
+      
+      // Skip if we've already seen this exact message
+      if (seen.has(key)) continue;
+      
+      seen.add(key);
       out.push({ role, text });
     }
     return out;
