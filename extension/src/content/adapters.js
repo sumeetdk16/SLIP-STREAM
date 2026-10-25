@@ -231,17 +231,45 @@
         // Strategy 1: data-message-author-role attribute (most reliable)
         let nodes = Array.from(document.querySelectorAll('[data-message-author-role]'));
         if (debug) console.log('[Slipstream] ChatGPT: Found', nodes.length, 'nodes with [data-message-author-role]');
+        // Strategy 2: section > p pattern (2024 ChatGPT structure)
+        // ChatGPT now uses <section> containers with <p> tags for message content
+        if (!nodes.length) {
+          const main = document.querySelector('main');
+          if (main) {
+            const sections = Array.from(main.querySelectorAll('section'));
+            const messageParagraphs = [];
+            
+            sections.forEach(section => {
+              const paragraphs = Array.from(section.querySelectorAll('p'));
+              paragraphs.forEach(p => {
+                const text = readText(p).trim();
+                // Must have substantial text, not be UI chrome
+                if (text.length > MIN_MESSAGE_CHARS && text.length < 5000) {
+                  // Avoid "Copy", "Select text" UI labels
+                  if (!text.match(/^(Copy|Select text|You said:|ChatGPT said:)$/i)) {
+                    messageParagraphs.push(p);
+                  }
+                }
+              });
+            });
+            
+            if (messageParagraphs.length > 0) {
+              nodes = messageParagraphs;
+              if (debug) console.log('[Slipstream] ChatGPT fallback 1 (section>p): Found', nodes.length, 'messages');
+            }
+          }
+        }
         
-        // Strategy 2: Look for conversation turn containers
+        // Strategy 3: Look for conversation turn containers
         if (!nodes.length) {
           nodes = Array.from(document.querySelectorAll('[data-testid*="conversation-turn"]'));
           if (debug) console.log('[Slipstream] ChatGPT fallback 1: Found', nodes.length, 'nodes with [data-testid*="conversation-turn"]');
         }
         
-        // Strategy 3: Look for article elements
+        // Strategy 4: Look for article elements
         if (!nodes.length) {
           nodes = Array.from(document.querySelectorAll('main article'));
-          if (debug) console.log('[Slipstream] ChatGPT fallback 2: Found', nodes.length, 'article nodes');
+          if (debug) console.log('[Slipstream] ChatGPT fallback 3: Found', nodes.length, 'article nodes');
         }
         
         // Strategy 4: Smart parent detection - find parent with multiple message-like children
