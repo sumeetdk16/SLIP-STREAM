@@ -124,7 +124,7 @@ function transcriptFrom(messages) {
   let out = lines.join('\n\n');
   if (out.length > MAX_TRANSCRIPT_CHARS) {
     // Keep the tail: the current state of a thread matters more than its opening.
-    out = '[…earlier turns trimmed…]\n\n' + out.slice(-MAX_TRANSCRIPT_CHARS);
+    out = '[…earlier messages trimmed…]\n\n' + out.slice(-MAX_TRANSCRIPT_CHARS);
   }
   return out;
 }
@@ -169,32 +169,8 @@ async function storeContext(capture) {
   const threadKey = capture.threadKey || capture.url;
   const existingIdx = contexts.findIndex((c) => (c.threadKey || c.url) === threadKey);
 
-  // Count actual conversation turns by looking at role transitions
-  // A turn = one user-assistant exchange (one back-and-forth)
-  function countTurns(messages) {
-    if (!messages || messages.length === 0) return 0;
-    if (messages.length === 1) return 1;
-    
-    // Count role transitions (switches between user and assistant)
-    let transitions = 0;
-    let lastRole = messages[0].role;
-    
-    for (let i = 1; i < messages.length; i++) {
-      const currentRole = messages[i].role;
-      if (currentRole !== lastRole) {
-        transitions++;
-        lastRole = currentRole;
-      }
-    }
-    
-    // Each role transition represents moving forward in the conversation
-    // transitions + 1 = number of "blocks" of consecutive same-role messages
-    // For turn counting: we want user-assistant pairs
-    // So: (transitions + 1) gives us message blocks, divide by 2 for pairs
-    return Math.ceil((transitions + 1) / 2);
-  }
-  
-  const turnCount = countTurns(capture.messages);
+  // Simply count the number of messages in the conversation
+  const messageCount = capture.messages.length;
   
   const entry = {
     id: existingIdx >= 0 ? contexts[existingIdx].id : crypto.randomUUID(),
@@ -203,8 +179,7 @@ async function storeContext(capture) {
     url: capture.url,
     threadKey,
     messages: capture.messages,
-    messageCount: capture.messages.length,
-    turnCount: turnCount,
+    messageCount: messageCount,
     capturedAt: Date.now(),
     auto: !!capture.auto
   };

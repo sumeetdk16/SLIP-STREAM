@@ -611,39 +611,17 @@
         ]);
       }
 
-      const count = cap ? cap.messages.length : selected?.messageCount || 0;
-      
-      // Count turns by role transitions (more accurate than simple division)
-      const calculateTurns = (messages) => {
-        if (!messages || messages.length === 0) return 0;
-        if (messages.length === 1) return 1;
-        
-        let transitions = 0;
-        let lastRole = messages[0].role;
-        
-        for (let i = 1; i < messages.length; i++) {
-          if (messages[i].role !== lastRole) {
-            transitions++;
-            lastRole = messages[i].role;
-          }
-        }
-        
-        // transitions + 1 = number of message blocks
-        // Divide by 2 to get user-assistant pairs (turns)
-        return Math.ceil((transitions + 1) / 2);
-      };
-      
-      const turnCount = cap ? calculateTurns(cap.messages) : (selected?.turnCount || Math.ceil((selected?.messageCount || 0) / 2));
+      const messageCount = cap ? cap.messages.length : selected?.messageCount || 0;
       const title = (cap?.title || selected?.title || 'Untitled thread').trim() || 'Untitled thread';
       const savedAt = selected?.capturedAt;
-      // 30 turns is where a thread stops fitting comfortably in one handoff.
-      const fill = Math.min(100, Math.round((turnCount / 30) * 100));
+      // 60 messages is where a thread stops fitting comfortably in one handoff.
+      const fill = Math.min(100, Math.round((messageCount / 60) * 100));
 
       const stn = h('span', { class: 'stn', html: slipstreamLogo(platform.id, { size: 15 }) });
       stn.style.setProperty('--ss-tint', platform.color);
 
       const meta = h('div', { class: 'meta' }, [
-        h('span', { text: `${turnCount} turn${turnCount === 1 ? '' : 's'} · ${savedAt ? 'saved ' + timeAgo(savedAt) : 'not saved yet'}` })
+        h('span', { text: `${messageCount} message${messageCount === 1 ? '' : 's'} · ${savedAt ? 'saved ' + timeAgo(savedAt) : 'not saved yet'}` })
       ]);
       if (cap?.degraded) meta.appendChild(h('span', { class: 'warn', text: ' · partial read' }));
 

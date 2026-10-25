@@ -19,8 +19,8 @@
   const GO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
     stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M5 12h13M13 7l5 5-5 5"/></svg>`;
 
-  /** 30 turns is where a thread stops fitting comfortably in one handoff. */
-  const COMFORTABLE_TURNS = 30;
+  /** 60 messages is where a thread stops fitting comfortably in one handoff. */
+  const COMFORTABLE_MESSAGES = 60;
 
   const $ = (id) => document.getElementById(id);
 
@@ -80,11 +80,11 @@
         <span class="caret">${CARET}</span>`;
       head.querySelector('.t').textContent = ctx.title || 'Untitled thread';
       head.querySelector('.m').textContent =
-        `${source?.name || ctx.platform} · ${ctx.turnCount || Math.ceil(ctx.messageCount / 2)} turn${(ctx.turnCount || Math.ceil(ctx.messageCount / 2)) === 1 ? '' : 's'}`;
+        `${source?.name || ctx.platform} · ${ctx.messageCount || 0} message${(ctx.messageCount || 0) === 1 ? '' : 's'}`;
       head.querySelector('.age').textContent = timeAgo(ctx.capturedAt);
       // Gold measures: the same thread-length gauge the widget shows, so a
       // thread that is getting long says so on whichever surface you open.
-      const fill = Math.min(1, (ctx.turnCount || Math.ceil(ctx.messageCount / 2)) / COMFORTABLE_TURNS);
+      const fill = Math.min(1, (ctx.messageCount || 0) / COMFORTABLE_MESSAGES);
       head.querySelector('.gauge i').style.transform = `scaleX(${fill})`;
       head.addEventListener('click', () => {
         const open = card.classList.toggle('open');

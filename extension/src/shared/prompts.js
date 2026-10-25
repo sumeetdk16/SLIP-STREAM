@@ -104,7 +104,7 @@
       tail.unshift(lines[i]);
       used += lines[i].length;
     }
-    return [...head, '\n[…earlier turns trimmed…]\n', ...tail].join('\n\n');
+    return [...head, '\n[…earlier messages trimmed…]\n', ...tail].join('\n\n');
   }
 
   root.SlipstreamPrompts = {

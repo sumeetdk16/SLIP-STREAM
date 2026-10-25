@@ -60,7 +60,7 @@ test('re-rendering does not disturb a prompt being typed', () => {
 
   // An auto-capture tick lands mid-sentence.
   api.setCapture(capture(9));
-  api.setContexts([{ id: 'a', platform: 'claude', title: 'Other thread', capturedAt: Date.now(), messageCount: 4, turnCount: 2 }]);
+  api.setContexts([{ id: 'a', platform: 'claude', title: 'Other thread', capturedAt: Date.now(), messageCount: 4 }]);
 
   assert.equal(shadow.querySelector('textarea'), box, 'the textarea must be the same node');
   assert.equal(box.value, 'half-written prompt');

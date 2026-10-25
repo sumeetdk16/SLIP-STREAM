@@ -76,7 +76,7 @@ test('message chrome (buttons, icons) is stripped from captured text', () => {
   assert.equal(assistant.text, 'Wrap it in a timer');
 });
 
-test('a streaming duplicate of the final turn is collapsed', () => {
+test('a streaming duplicate of the final message is collapsed', () => {
   const html = `<main>
     <div data-message-author-role="assistant">Partial answer</div>
     <div data-message-author-role="assistant">Partial answer</div>

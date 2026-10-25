@@ -352,7 +352,7 @@
         if (bubbles.length) {
           return collect(
             bubbles.map((el) => {
-              // Grok right-aligns the user's own turns; that alignment is the
+              // Grok right-aligns the user's own messages; that alignment is the
               // only stable role signal in its markup, and it sits on one of
               // the wrappers rather than the bubble itself.
               let cls = String(el.className || '');
@@ -439,7 +439,7 @@
 
   /**
    * Last resort when selectors miss entirely: take the main column's text as a
-   * single assistant turn. Roles are lost, so callers flag the result degraded.
+   * single assistant message. Roles are lost, so callers flag the result degraded.
    */
   function fallbackExtract() {
     const main = document.querySelector('main') || document.body;

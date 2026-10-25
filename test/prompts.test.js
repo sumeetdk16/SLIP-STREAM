@@ -20,8 +20,8 @@ test('short threads are passed through whole', () => {
 test('long threads keep both the opening and the current state', () => {
   const msgs = messages(40);
   const brief = SlipstreamPrompts.localBrief(msgs, 2000);
-  assert.match(brief, /turn 0/, 'opening turn must survive: it holds the goal');
-  assert.match(brief, /turn 39/, 'final turn must survive: it holds the state');
+  assert.match(brief, /turn 0/, 'opening message must survive: it holds the goal');
+  assert.match(brief, /turn 39/, 'final message must survive: it holds the state');
   assert.match(brief, /trimmed/);
   assert.ok(brief.length < 4000, 'trimmed brief should stay near the budget');
 });
