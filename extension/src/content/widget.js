@@ -602,7 +602,8 @@
 
     function threadSection() {
       const cap = state.capture;
-      const selected = state.contexts.find((c) => c.id === state.selectedId);
+      // Safety check: ensure contexts is an array
+      const selected = Array.isArray(state.contexts) ? state.contexts.find((c) => c.id === state.selectedId) : null;
 
       if (!cap && !selected) {
         return h('section', {}, [
@@ -881,7 +882,7 @@
         if (state.open) render();
       },
       setContexts(contexts) {
-        state.contexts = contexts || [];
+        state.contexts = Array.isArray(contexts) ? contexts : [];
         if (!state.selectedId && state.contexts[0]) state.selectedId = state.contexts[0].id;
         if (state.open) render();
       },
