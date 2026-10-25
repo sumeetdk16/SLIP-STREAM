@@ -221,39 +221,123 @@
         const debug = localStorage.getItem('slipstream-debug') === 'true';
         
         // Try multiple selector strategies for ChatGPT's evolving markup
+        // Strategy 1: data-message-author-role attribute (most reliable)
         let nodes = Array.from(document.querySelectorAll('[data-message-author-role]'));
         if (debug) console.log('[Slipstream] ChatGPT: Found', nodes.length, 'nodes with [data-message-author-role]');
         
-        // Fallback: look for message containers with role attributes
+        // Strategy 2: Look for conversation turn containers
         if (!nodes.length) {
           nodes = Array.from(document.querySelectorAll('[data-testid*="conversation-turn"]'));
-          if (debug) console.log('[Slipstream] ChatGPT fallback: Found', nodes.length, 'nodes with [data-testid*="conversation-turn"]');
+          if (debug) console.log('[Slipstream] ChatGPT fallback 1: Found', nodes.length, 'nodes with [data-testid*="conversation-turn"]');
         }
         
-        // Fallback: look for common message wrapper patterns
+        // Strategy 3: Look for article elements
+        if (!nodes.length) {
+          nodes = Array.from(document.querySelectorAll('main article'));
+          if (debug) console.log('[Slipstream] ChatGPT fallback 2: Found', nodes.length, 'article nodes');
+        }
+        
+        // Strategy 4: Smart parent detection - find parent with multiple message-like children
+        if (!nodes.length) {
+          const main = document.querySelector('main');
+          if (main) {
+            // Find all divs in main
+            const allDivs = Array.from(main.querySelectorAll('div'));
+            
+            // Group by parent and find parents with multiple substantial children
+            const parentMap = new Map();
+            allDivs.forEach(div => {
+              const parent = div.parentElement;
+              if (!parent) return;
+              
+              const text = readText(div).trim();
+              // Must have substantial text and not too much (not the whole page)
+              // Also must have few nested divs (actual messages don't have deep nesting)
+              const nestedDivs = div.querySelectorAll('div').length;
+              if (text.length > MIN_MESSAGE_CHARS && text.length < 5000 && nestedDivs < 20) {
+                if (!parentMap.has(parent)) parentMap.set(parent, []);
+                parentMap.get(parent).push(div);
+              }
+            });
+            
+            // Find parent with reasonable number of children (3-50 messages)
+            // Require at least 3 to avoid false positives
+            for (const [parent, children] of parentMap) {
+              if (children.length >= 3 && children.length <= 50) {
+                nodes = children;
+                if (debug) console.log('[Slipstream] ChatGPT fallback 3: Found', nodes.length, 'smart-detected messages');
+                break;
+              }
+            }
+          }
+        }
+        
+        // Strategy 5: Look for group pattern
         if (!nodes.length) {
           nodes = Array.from(document.querySelectorAll('main [class*="group"]')).filter(el => {
             const text = readText(el);
-            return text.length > MIN_MESSAGE_CHARS;
+            return text.length > MIN_MESSAGE_CHARS && text.length < 5000;
           });
-          if (debug) console.log('[Slipstream] ChatGPT fallback 2: Found', nodes.length, 'group nodes');
+          if (debug) console.log('[Slipstream] ChatGPT fallback 4: Found', nodes.length, 'group nodes');
+        }
+        
+        // Strategy 6: Deep scan - find divs at consistent depth with message-like content
+        if (!nodes.length) {
+          const main = document.querySelector('main');
+          if (main) {
+            const getDOMDepth = (el) => {
+              let depth = 0;
+              let current = el;
+              while (current !== main && current.parentElement) {
+                current = current.parentElement;
+                depth++;
+              }
+              return depth;
+            };
+            
+            const allDivs = Array.from(main.querySelectorAll('div')).filter(div => {
+              const text = readText(div).trim();
+              return text.length > MIN_MESSAGE_CHARS && text.length < 5000;
+            });
+            
+            // Group by depth
+            const byDepth = {};
+            allDivs.forEach(div => {
+              const depth = getDOMDepth(div);
+              if (!byDepth[depth]) byDepth[depth] = [];
+              byDepth[depth].push(div);
+            });
+            
+            // Find depth with reasonable message count (3-50), require at least 3
+            for (const depth in byDepth) {
+              const count = byDepth[depth].length;
+              if (count >= 3 && count <= 50) {
+                nodes = byDepth[depth];
+                if (debug) console.log('[Slipstream] ChatGPT fallback 5: Found', nodes.length, 'messages at depth', depth);
+                break;
+              }
+            }
+          }
         }
         
         const messages = collect(
-          nodes.map((el) => {
+          nodes.map((el, idx) => {
             // Check data attribute first
             const roleAttr = el.getAttribute('data-message-author-role');
             if (roleAttr) {
               return { el, role: roleAttr === 'user' ? 'user' : 'assistant' };
             }
             
-            // Fallback: detect role from content or position
-            // ChatGPT typically right-aligns or differently styles user messages
-            const classes = el.className || '';
-            const isUser = classes.includes('user') || 
-                          el.querySelector('[data-message-author-role="user"]') ||
-                          el.closest('[data-message-author-role="user"]');
-            return { el, role: isUser ? 'user' : 'assistant' };
+            // Check testid attribute
+            const testid = el.getAttribute('data-testid');
+            if (testid) {
+              if (testid.includes('user')) return { el, role: 'user' };
+              if (testid.includes('assistant') || testid.includes('bot')) return { el, role: 'assistant' };
+            }
+            
+            // Heuristic: ChatGPT alternates user/assistant, typically starts with user
+            // This is a fallback when we can't detect roles properly
+            return { el, role: idx % 2 === 0 ? 'user' : 'assistant' };
           })
         );
         
